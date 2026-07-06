@@ -27,16 +27,19 @@ specialized agent must produce.
 
 ---
 
-## Band B — Core Runtime
+## Band B — Core Runtime (Memory Arbiter)
 
-Implements the interfaces declared in Band A.
+Implemented CPU-only; all sizing numbers are configured placeholders pending
+the measured budget sheet (**D-03**) from the live MI300X.
 
 | Module | Responsibility |
 |--------|----------------|
-| `registry.py` | Central catalog of live artifacts and agent handles |
-| `materializer.py` | Checkpoint loading, tensor layout, dtype promotion |
-| `residency.py` | Tracks which tensors reside in HBM3 vs host RAM |
-| `budgeter.py` | Per-agent token budgets, memory quotas, priority queues |
+| `memory_model.py` | Explicit HBM3 model: capacity (192 GB), headroom, per-model weights/master GB, per-agent delta budgets — placeholder values, real arithmetic (D-03) |
+| `registry.py` | Artifact catalog + `EngineRegistry` (model → engine base_url/port; health via Contract B `/v1/models`) |
+| `materializer.py` | `LazyMaterializer`: one-time master prefill per model through Contract B; idempotent and concurrency-safe (per-model `asyncio.Lock`); counts `prefills_avoided` |
+| `residency.py` | `ResidencyManager`: leases pin blocks. **Invariant:** a block with ≥ 1 active lease can never be evicted — `evict()` raises `PinnedBlockError`, and it is the only eviction code path |
+| `budgeter.py` | Admission law: `admit ⇔ weights + Σ masters + Σ active_deltas + request ≤ capacity − headroom`. Pressure order: (a) shrink new deltas, (b) reject with `BudgetExceeded`, (c) never touch pinned masters. Byte-exact integer ledger |
+| `metrics.py` | Counters/gauges: `prefills_avoided`, `gb_saved_vs_per_agent` (= `(agents_sharing − 1) × master_gb` per model), `active_leases`, ledger snapshot. Plain-dict export for the L9 dashboard |
 
 ---
 

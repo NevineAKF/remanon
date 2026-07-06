@@ -1,24 +1,84 @@
-"""Band B — HBM3 tensor materialisation (stub)."""
+"""
+Lazy context materializer — Band B (Memory Arbiter).
+
+materialize(context_id, model) performs the one-time master prefill through
+Contract B, caches the resulting handle, and is idempotent and
+concurrency-safe: N concurrent calls for the same model result in exactly
+one prefill (guarded by a per-model asyncio.Lock).
+"""
 
 from __future__ import annotations
 
-from contracts.contract_a import HBM3Handle, Materializer
+import asyncio
+import uuid
+from dataclasses import dataclass
+from datetime import UTC, datetime
+
+import httpx
+
+from app.adapter.contract_b_client import ContractBClient
+from core.registry import EngineRegistry
 
 
-class CPUMaterializer(Materializer):
-    """CPU-only stub; GPU path gated behind REMANON_GPU=1 (not yet implemented)."""
+@dataclass(frozen=True, slots=True)
+class MaterializedHandle:
+    """Opaque reference to a materialized master context block."""
 
-    def materialize(
+    handle_id: str
+    model: str
+    context_id: str
+    created_at: datetime
+
+
+class LazyMaterializer:
+    """One master prefill per model, no matter how many agents ask."""
+
+    def __init__(
         self,
-        checkpoint_uri: str,
-        handle: HBM3Handle,
-        dtype: str = "bfloat16",
+        registry: EngineRegistry,
+        transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
-        # TODO: ROCm / hipBLAS loading path
-        raise NotImplementedError(
-            f"materialize({checkpoint_uri!r}, handle={handle!r}, dtype={dtype!r}) — stub"
-        )
+        self._registry = registry
+        self._transport = transport
+        self._handles: dict[str, MaterializedHandle] = {}
+        # setdefault is atomic under asyncio's single-threaded scheduling
+        self._locks: dict[str, asyncio.Lock] = {}
+        self.prefills_performed = 0
+        self.prefills_avoided = 0
 
-    def evict(self, handle: HBM3Handle) -> None:
-        # TODO: release HBM3 region
-        raise NotImplementedError(f"evict(handle={handle!r}) — stub")
+    async def materialize(self, context_id: str, model: str) -> MaterializedHandle:
+        cached = self._handles.get(model)
+        if cached is not None:
+            self.prefills_avoided += 1
+            return cached
+
+        lock = self._locks.setdefault(model, asyncio.Lock())
+        async with lock:
+            # Double-check: another task may have prefilled while we waited.
+            cached = self._handles.get(model)
+            if cached is not None:
+                self.prefills_avoided += 1
+                return cached
+
+            await self._prefill(context_id, model)
+            handle = MaterializedHandle(
+                handle_id=uuid.uuid4().hex,
+                model=model,
+                context_id=context_id,
+                created_at=datetime.now(UTC),
+            )
+            self._handles[model] = handle
+            self.prefills_performed += 1
+            return handle
+
+    def get_handle(self, model: str) -> MaterializedHandle | None:
+        return self._handles.get(model)
+
+    async def _prefill(self, context_id: str, model: str) -> None:
+        engine = self._registry.resolve(model)
+        client = ContractBClient(engine.base_url, transport=self._transport)
+        await client.chat_completion(
+            model=model,
+            messages=[{"role": "system", "content": f"[master-prefill] context_id={context_id}"}],
+            max_tokens=1,
+        )

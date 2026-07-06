@@ -1,8 +1,12 @@
-"""Band B — GPU-memory residency tracking (stub)."""
+"""Band B — residency: lease-pinned block management (Memory Arbiter)."""
 
 from __future__ import annotations
 
+import asyncio
+import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from enum import Enum, auto
 
 
@@ -46,3 +50,128 @@ class ResidencyTracker:
 
     def total_hbm3_bytes(self) -> int:
         return sum(r.size_bytes for r in self._regions.values() if r.state == ResidencyState.HBM3)
+
+
+# ---------------------------------------------------------------------------
+# Lease-pinned residency (Phase 3 — Memory Arbiter)
+# ---------------------------------------------------------------------------
+
+
+class PinnedBlockError(RuntimeError):
+    """Raised when evict() targets a block that holds >= 1 active lease."""
+
+
+@dataclass(frozen=True, slots=True)
+class Lease:
+    lease_id: str
+    agent: str
+    model: str
+    context_id: str
+    created_at: datetime
+
+
+@dataclass(slots=True)
+class Block:
+    model: str
+    context_id: str
+
+
+class LeaseTable:
+    """Index of active leases, keyed by lease_id, with per-model lookups."""
+
+    def __init__(self) -> None:
+        self._by_id: dict[str, Lease] = {}
+
+    def add(self, lease: Lease) -> None:
+        self._by_id[lease.lease_id] = lease
+
+    def remove(self, lease_id: str) -> Lease:
+        if lease_id not in self._by_id:
+            raise KeyError(f"Unknown lease: {lease_id}")
+        return self._by_id.pop(lease_id)
+
+    def get(self, lease_id: str) -> Lease:
+        if lease_id not in self._by_id:
+            raise KeyError(f"Unknown lease: {lease_id}")
+        return self._by_id[lease_id]
+
+    def active(self) -> list[Lease]:
+        return list(self._by_id.values())
+
+    def leases_for_model(self, model: str) -> list[Lease]:
+        return [le for le in self._by_id.values() if le.model == model]
+
+    def agents_for_model(self, model: str) -> set[str]:
+        return {le.agent for le in self._by_id.values() if le.model == model}
+
+    def __len__(self) -> int:
+        return len(self._by_id)
+
+
+class ResidencyManager:
+    """
+    Manages master-context blocks and the leases pinning them.
+
+    INVARIANT: a block with >= 1 active lease is PINNED. evict() is the only
+    eviction code path, and it raises PinnedBlockError for pinned blocks —
+    nothing may bypass this.
+
+    The optional on_release callback fires after a lease is released
+    (used to free the lease's delta budget in the MemoryBudgeter).
+    """
+
+    def __init__(self, on_release: Callable[[Lease], None] | None = None) -> None:
+        self._lock = asyncio.Lock()
+        self._blocks: dict[str, Block] = {}
+        self._table = LeaseTable()
+        self._on_release = on_release
+
+    async def lease(self, context_id: str, model: str, agent: str) -> Lease:
+        async with self._lock:
+            self._blocks.setdefault(model, Block(model=model, context_id=context_id))
+            new_lease = Lease(
+                lease_id=uuid.uuid4().hex,
+                agent=agent,
+                model=model,
+                context_id=context_id,
+                created_at=datetime.now(UTC),
+            )
+            self._table.add(new_lease)
+            return new_lease
+
+    async def release(self, lease_id: str) -> None:
+        async with self._lock:
+            released = self._table.remove(lease_id)
+        if self._on_release is not None:
+            self._on_release(released)
+
+    async def evict(self, model: str) -> None:
+        """Remove an unpinned block. Raises PinnedBlockError if any lease is active."""
+        async with self._lock:
+            if model not in self._blocks:
+                raise KeyError(f"No block for model: {model!r}")
+            holders = self._table.leases_for_model(model)
+            if holders:
+                raise PinnedBlockError(
+                    f"Block {model!r} is pinned by {len(holders)} active lease(s); eviction refused"
+                )
+            del self._blocks[model]
+
+    # --- read-only queries (no lock needed: asyncio single-threaded, no awaits) ---
+
+    def is_pinned(self, model: str) -> bool:
+        return bool(self._table.leases_for_model(model))
+
+    def has_block(self, model: str) -> bool:
+        return model in self._blocks
+
+    def agents_sharing(self, model: str) -> set[str]:
+        return self._table.agents_for_model(model)
+
+    @property
+    def active_leases(self) -> int:
+        return len(self._table)
+
+    @property
+    def lease_table(self) -> LeaseTable:
+        return self._table
