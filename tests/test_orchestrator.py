@@ -288,6 +288,78 @@ class TestEventLogArtifacts:
 # ---------------------------------------------------------------------------
 
 
+def _sparse_real_distribution() -> list[TelemetryRecord]:
+    """
+    Mimics the real HDFS_2k alert distribution: isolated WARNs spread over
+    ~38 hours, plus one modest cluster of 5 WARNs inside a 300 s window.
+    """
+    from datetime import UTC, datetime, timedelta
+
+    def warn(ts) -> TelemetryRecord:
+        return TelemetryRecord(
+            ts=ts,
+            node="10.0.0.1",
+            level="WARN",
+            component="dfs.DataNode",
+            message="synthetic sparse warn",
+            dialect="hdfs",
+            raw_line="",
+        )
+
+    base = datetime(2008, 11, 9, 20, 0, 0, tzinfo=UTC)
+    records = [warn(base + timedelta(minutes=30 * i)) for i in range(75)]  # one per 30 min
+    burst_start = base + timedelta(hours=20, minutes=7)
+    records += [warn(burst_start + timedelta(seconds=60 * j)) for j in range(5)]  # 5 in 240 s
+    return sorted(records, key=lambda r: r.ts)
+
+
+class TestSparseIntakeTuning:
+    """The intake rule must be tuned from the data's burst profile, not magic numbers."""
+
+    def test_tuned_thresholds_open_case_strict_thresholds_do_not(self, tmp_path: Path) -> None:
+        records = _sparse_real_distribution()
+        store = TelemetryStore(tmp_path / "sparse.duckdb")
+        store.write_records(records)
+
+        # Profile the data: max alerts in a 300 s window is the 5-record cluster.
+        profile = store.burst_profile(300.0)
+        assert profile is not None
+        max_n, _ = profile
+        assert max_n == 5
+
+        # Tuned from the profile → the case opens.
+        tuned = BurstDetector(threshold=max_n, window_s=300.0)
+        tuned_cases = [c for r in records if (c := tuned.observe(r))]
+        assert len(tuned_cases) >= 1
+        assert tuned_cases[0]["record_count"] == max_n
+
+        # Strict thresholds (the old fixture-tuned defaults: 5 in 60 s) → silence.
+        strict = BurstDetector(threshold=5, window_s=60.0)
+        strict_cases = [c for r in records if (c := strict.observe(r))]
+        assert strict_cases == []
+        store.close()
+
+    async def test_intake_independent_of_replay_speed(self) -> None:
+        """The window compares ORIGINAL record timestamps, so --speed is irrelevant."""
+        from app.dataplane.replayer import stream
+
+        records = _sparse_real_distribution()
+
+        direct = BurstDetector(threshold=5, window_s=300.0)
+        direct_cases = [c for r in records if (c := direct.observe(r))]
+
+        replayed = BurstDetector(threshold=5, window_s=300.0)
+        replayed_cases = []
+        async for record in stream(records, speed_factor=1_000_000_000.0):
+            case = replayed.observe(record)
+            if case:
+                replayed_cases.append(case)
+
+        assert len(replayed_cases) == len(direct_cases) == 1
+        assert replayed_cases[0]["opened_at"] == direct_cases[0]["opened_at"]
+        assert replayed_cases[0]["record_count"] == direct_cases[0]["record_count"]
+
+
 class TestBurstDetector:
     def test_below_threshold_no_case(self) -> None:
         records = _fixture_records()

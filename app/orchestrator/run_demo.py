@@ -51,22 +51,32 @@ def demo(
     log_file: Path = _LOG_FILE_OPTION,
     db: Path = _DB_OPTION,
     speed: float = typer.Option(60.0, help="Replay speed factor (log-seconds per wall-second)."),
-    threshold: int = typer.Option(5, help="WARN/ERROR count that opens a case."),
-    window_s: float = typer.Option(60.0, help="Sliding window (log-seconds) for the burst rule."),
+    # Intake defaults are measured, not guessed: the HDFS_2k store profile shows
+    # a maximum of 5 alerts in any 300 s window (at 2008-11-10 08:30:45), while
+    # 60 s windows never exceed 3 — hence n=4 within 300 s.
+    burst_n: int = typer.Option(
+        4, "--burst-n", help="WARN/ERROR count that opens a case (default from HDFS_2k profile)."
+    ),
+    burst_window_s: float = typer.Option(
+        300.0,
+        "--burst-window-s",
+        help="Sliding window in log-seconds, over ORIGINAL record timestamps "
+        "(independent of --speed).",
+    ),
     base_url: str = typer.Option(
         "", help="Live Contract B engine URL; empty = in-process mock engine."
     ),
     max_cases: int = typer.Option(5, help="Stop after this many cases."),
 ) -> None:
-    asyncio.run(_run(log_file, db, speed, threshold, window_s, base_url, max_cases))
+    asyncio.run(_run(log_file, db, speed, burst_n, burst_window_s, base_url, max_cases))
 
 
 async def _run(
     log_file: Path | None,
     db: Path,
     speed: float,
-    threshold: int,
-    window_s: float,
+    burst_n: int,
+    burst_window_s: float,
     base_url: str,
     max_cases: int,
 ) -> None:
@@ -87,6 +97,23 @@ async def _run(
             )
             raise typer.Exit(1)
         typer.echo(f"Using store {db} with {store.count()} records")
+
+    # --- burst profile: measured intake feasibility, printed up front ---
+    profile = store.burst_profile(burst_window_s)
+    if profile is None:
+        typer.echo(f"burst profile: no WARN/ERROR records in store (window={burst_window_s:g}s)")
+    else:
+        max_n, at = profile
+        typer.echo(
+            f"burst profile: max {max_n} alerts in any {burst_window_s:g}s window "
+            f"(at {at.isoformat()}); intake rule: >= {burst_n} alerts in {burst_window_s:g}s"
+        )
+        if burst_n > max_n:
+            typer.echo(
+                f"WARNING: --burst-n={burst_n} exceeds the dataset maximum ({max_n}) — "
+                "this run will open ZERO cases.",
+                err=True,
+            )
 
     # --- Contract B endpoint ---
     if base_url:
@@ -131,7 +158,7 @@ async def _run(
         "reporter": ReporterAgent(**deps),
     }
     orchestrator = Orchestrator(agents, EventLog())
-    detector = BurstDetector(threshold=threshold, window_s=window_s)
+    detector = BurstDetector(threshold=burst_n, window_s=burst_window_s)
 
     # --- replay + pipeline ---
     cases_processed = 0
@@ -140,13 +167,23 @@ async def _run(
         case = detector.observe(record)
         if case is None:
             continue
-        typer.echo(f"\nCASE OPENED {case['case_id']} ({case['record_count']} alert records)")
+        nodes = ",".join(sorted({t["node"] for t in case["trigger_records"]}))
+        typer.echo(
+            f"\n[case-open] t={case['opened_at']} triggers={case['record_count']} "
+            f"nodes={nodes} id={case['case_id'][:8]}"
+        )
         verdict = await orchestrator.run_case(case)
         cases_processed += 1
         _print_verdict(verdict)
         if cases_processed >= max_cases:
             typer.echo(f"Reached --max-cases={max_cases}, stopping replay.")
             break
+
+    if cases_processed == 0:
+        typer.echo(
+            "\nNo cases opened. Check the burst profile above and lower --burst-n "
+            "or widen --burst-window-s."
+        )
 
     # --- final metrics snapshot ---
     snapshot = metrics.export()

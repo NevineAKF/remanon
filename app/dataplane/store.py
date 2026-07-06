@@ -79,6 +79,34 @@ class TelemetryStore:
             return None
         return (_to_aware_utc(row[0]), _to_aware_utc(row[1]))
 
+    def burst_profile(self, window_s: float) -> tuple[int, datetime] | None:
+        """
+        Maximum number of WARN/ERROR/FATAL records in any sliding window of
+        *window_s* seconds, plus the window-end timestamp where it occurs.
+
+        Window semantics match BurstDetector: the window ends at each alert
+        record and extends window_s seconds back (inclusive), over ORIGINAL
+        record timestamps. Returns None if the store holds no alert records.
+        """
+        row = self._conn.execute(
+            """
+            SELECT a.ts AS window_end, COUNT(*) AS n
+            FROM telemetry a
+            JOIN telemetry b
+              ON b.level IN ('WARN', 'ERROR', 'FATAL')
+             AND b.ts <= a.ts
+             AND epoch(a.ts) - epoch(b.ts) <= ?
+            WHERE a.level IN ('WARN', 'ERROR', 'FATAL')
+            GROUP BY a.rowid, a.ts
+            ORDER BY n DESC, a.ts ASC
+            LIMIT 1
+            """,
+            [float(window_s)],
+        ).fetchone()
+        if row is None:
+            return None
+        return (int(row[1]), _to_aware_utc(row[0]))
+
     def query(self, sql: str) -> list[dict[str, Any]]:
         """Execute *sql* (may reference the `telemetry` table) and return rows as dicts."""
         result = self._conn.execute(sql)

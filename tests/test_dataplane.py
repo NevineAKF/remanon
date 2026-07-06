@@ -176,6 +176,31 @@ class TestTelemetryStore:
         assert parquet_path.exists()
         assert parquet_path.stat().st_size > 0
 
+    def test_burst_profile_on_fixture(
+        self, tmp_store: TelemetryStore, records: list[TelemetryRecord]
+    ) -> None:
+        tmp_store.write_records(records)
+        profile = tmp_store.burst_profile(60.0)
+        assert profile is not None
+        max_n, window_end = profile
+        # Fixture holds 6 alerts (4 WARN + 2 ERROR), all within one 60 s window
+        # ending at the last alert.
+        assert max_n == 6
+        assert window_end == datetime(2008, 11, 9, 20, 35, 33, tzinfo=UTC)
+
+    def test_burst_profile_smaller_window_smaller_max(
+        self, tmp_store: TelemetryStore, records: list[TelemetryRecord]
+    ) -> None:
+        tmp_store.write_records(records)
+        wide = tmp_store.burst_profile(60.0)
+        narrow = tmp_store.burst_profile(1.0)
+        assert wide is not None and narrow is not None
+        assert narrow[0] <= wide[0]
+        assert narrow[0] >= 1
+
+    def test_burst_profile_empty_store_is_none(self, tmp_store: TelemetryStore) -> None:
+        assert tmp_store.burst_profile(60.0) is None
+
 
 # ---------------------------------------------------------------------------
 # Replayer tests
