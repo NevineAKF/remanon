@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "remanon/artifact/hunter/v1",
+  "title": "HunterArtifact",
+  "description": "Output envelope produced by the Hunter agent.",
+  "type": "object",
+  "required": ["artifact_id", "agent", "version", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "artifact_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "agent": {
+      "type": "string",
+      "const": "hunter"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payload": {
+      "type": "object",
+      "required": ["findings"],
+      "additionalProperties": false,
+      "properties": {
+        "findings": {
+          "type": "array",
+          "description": "Individual threat or anomaly findings.",
+          "items": {
+            "type": "object",
+            "required": ["finding_id", "title", "severity", "evidence"],
+            "properties": {
+              "finding_id": {"type": "string"},
+              "title": {"type": "string", "maxLength": 128},
+              "severity": {
+                "type": "string",
+                "enum": ["critical", "high", "medium", "low", "info"]
+              },
+              "evidence": {
+                "type": "array",
+                "items": {"type": "string"},
+                "minItems": 1
+              },
+              "mitre_technique": {
+                "type": ["string", "null"],
+                "pattern": "^T\\d{4}(\\.\\d{3})?$"
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              }
+            }
+          }
+        },
+        "search_depth": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of retrieval hops performed."
+        },
+        "hbm3_handle": {
+          "type": ["string", "null"]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "remanon/artifact/reporter/v1",
+  "title": "ReporterArtifact",
+  "description": "Final consolidated report artifact produced by the Reporter agent.",
+  "type": "object",
+  "required": ["artifact_id", "agent", "version", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "artifact_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "agent": {
+      "type": "string",
+      "const": "reporter"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payload": {
+      "type": "object",
+      "required": ["title", "executive_summary", "sections", "source_artifacts"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "executive_summary": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["heading", "body"],
+            "properties": {
+              "heading": {"type": "string"},
+              "body": {"type": "string"},
+              "severity": {
+                "type": ["string", "null"],
+                "enum": ["critical", "high", "medium", "low", "info", null]
+              }
+            }
+          },
+          "minItems": 1
+        },
+        "source_artifacts": {
+          "type": "array",
+          "description": "UUIDs of artifacts consumed to produce this report.",
+          "items": {"type": "string", "format": "uuid"}
+        },
+        "overall_severity": {
+          "type": "string",
+          "enum": ["critical", "high", "medium", "low", "info"]
+        },
+        "hbm3_handle": {
+          "type": ["string", "null"]
+        }
+      }
+    }
+  }
+}

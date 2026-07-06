@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(pip install *)",
+      "PowerShell(where.exe uv 2>$null; python -m uv --version 2>&1)"
+    ]
+  }
+}

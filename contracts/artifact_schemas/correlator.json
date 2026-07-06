@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "remanon/artifact/correlator/v1",
+  "title": "CorrelatorArtifact",
+  "description": "Output envelope produced by the Correlator agent.",
+  "type": "object",
+  "required": ["artifact_id", "agent", "version", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "artifact_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "agent": {
+      "type": "string",
+      "const": "correlator"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payload": {
+      "type": "object",
+      "required": ["clusters", "cross_references"],
+      "additionalProperties": false,
+      "properties": {
+        "clusters": {
+          "type": "array",
+          "description": "Groups of correlated events or signals.",
+          "items": {
+            "type": "object",
+            "required": ["cluster_id", "members", "score"],
+            "properties": {
+              "cluster_id": {"type": "string"},
+              "members": {
+                "type": "array",
+                "items": {"type": "string"},
+                "minItems": 1
+              },
+              "score": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "label": {"type": "string"}
+            }
+          }
+        },
+        "cross_references": {
+          "type": "array",
+          "description": "Artifact IDs from other agents this artifact relates to.",
+          "items": {"type": "string", "format": "uuid"}
+        },
+        "hbm3_handle": {
+          "type": ["string", "null"]
+        }
+      }
+    }
+  }
+}

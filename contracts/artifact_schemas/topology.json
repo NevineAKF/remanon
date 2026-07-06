@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "remanon/artifact/topology/v1",
+  "title": "TopologyArtifact",
+  "description": "Output envelope produced by the Topology agent.",
+  "type": "object",
+  "required": ["artifact_id", "agent", "version", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "artifact_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "agent": {
+      "type": "string",
+      "const": "topology"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payload": {
+      "type": "object",
+      "required": ["nodes", "edges"],
+      "additionalProperties": false,
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "description": "Entities in the environment graph.",
+          "items": {
+            "type": "object",
+            "required": ["node_id", "kind", "label"],
+            "properties": {
+              "node_id": {"type": "string"},
+              "kind": {
+                "type": "string",
+                "enum": ["host", "service", "user", "process", "network", "unknown"]
+              },
+              "label": {"type": "string"},
+              "attributes": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "edges": {
+          "type": "array",
+          "description": "Directed relationships between nodes.",
+          "items": {
+            "type": "object",
+            "required": ["source", "target", "relation"],
+            "properties": {
+              "source": {"type": "string"},
+              "target": {"type": "string"},
+              "relation": {"type": "string"},
+              "weight": {
+                "type": ["number", "null"],
+                "minimum": 0.0
+              }
+            }
+          }
+        },
+        "hbm3_handle": {
+          "type": ["string", "null"]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,56 @@
+version: "3.9"
+
+# ---------------------------------------------------------------------------
+# Remanon service graph
+# ---------------------------------------------------------------------------
+# Services:
+#   mock_engine   — Contract B stub (OpenAI-compatible vLLM imitation)
+#   orchestrator  — Band C orchestration service (placeholder)
+#   dashboard     — Observability UI (placeholder)
+#
+# GPU note: add `deploy.resources.reservations.devices` under mock_engine
+# when targeting a real MI300X with ROCm Docker runtime.
+# ---------------------------------------------------------------------------
+
+services:
+
+  mock_engine:
+    build:
+      context: ./mock_engine
+      dockerfile: Dockerfile
+    image: remanon/mock_engine:dev
+    container_name: remanon_mock_engine
+    ports:
+      - "8000:8000"
+    environment:
+      - LOG_LEVEL=info
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  orchestrator:
+    image: remanon/orchestrator:dev   # built separately — placeholder
+    container_name: remanon_orchestrator
+    depends_on:
+      mock_engine:
+        condition: service_healthy
+    environment:
+      - INFERENCE_BASE_URL=http://mock_engine:8000
+      - REMANON_GPU=0
+    ports:
+      - "8080:8080"
+    profiles: ["app"]   # opt-in: docker compose --profile app up
+
+  dashboard:
+    image: remanon/dashboard:dev      # placeholder
+    container_name: remanon_dashboard
+    ports:
+      - "3000:3000"
+    profiles: ["app"]
+
+networks:
+  default:
+    name: remanon_net
