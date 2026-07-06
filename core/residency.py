@@ -45,8 +45,4 @@ class ResidencyTracker:
         return [r for r in self._regions.values() if r.state == state]
 
     def total_hbm3_bytes(self) -> int:
-        return sum(
-            r.size_bytes
-            for r in self._regions.values()
-            if r.state == ResidencyState.HBM3
-        )
+        return sum(r.size_bytes for r in self._regions.values() if r.state == ResidencyState.HBM3)

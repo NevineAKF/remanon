@@ -69,6 +69,7 @@ _MODEL_IDS = {m["id"] for m in _MODELS}
 # Request / Response schemas (OpenAI-compatible subset)
 # ---------------------------------------------------------------------------
 
+
 class ChatMessage(BaseModel):
     role: str
     content: str
@@ -85,6 +86,7 @@ class ChatCompletionRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
 
 @app.get("/health")
 async def health() -> dict:
@@ -140,6 +142,7 @@ async def chat_completions(req: ChatCompletionRequest) -> dict:
 # ---------------------------------------------------------------------------
 # Global error handler — return OpenAI-style error envelopes
 # ---------------------------------------------------------------------------
+
 
 @app.exception_handler(Exception)
 async def generic_error_handler(request: Request, exc: Exception) -> JSONResponse:

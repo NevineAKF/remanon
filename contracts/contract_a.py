@@ -30,6 +30,7 @@ HBM3Handle = str | None  # opaque region identifier; None in CPU-only mode
 # Artifact envelope
 # ---------------------------------------------------------------------------
 
+
 class Artifact:
     """Validated artifact produced by any Remanon agent."""
 
@@ -68,6 +69,7 @@ def _load_schema(agent_name: AgentName) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Band A interfaces
 # ---------------------------------------------------------------------------
+
 
 class LeaseManager(ABC):
     """Allocates and releases named HBM3 memory regions."""

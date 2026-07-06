@@ -19,6 +19,7 @@ from deploy.mock_engine.main import app as mock_app
 # helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_triage_raw(routing: list[str] | None = None) -> dict:
     return {
         "artifact_id": str(uuid.uuid4()),
@@ -38,6 +39,7 @@ def _make_triage_raw(routing: list[str] | None = None) -> dict:
 # ---------------------------------------------------------------------------
 # Contract A — schema validation
 # ---------------------------------------------------------------------------
+
 
 class TestArtifactSchemas:
     def test_all_schemas_present(self):
@@ -73,6 +75,7 @@ class TestArtifactSchemas:
 # Core — Registry
 # ---------------------------------------------------------------------------
 
+
 class TestRegistry:
     def test_register_and_retrieve_artifact(self):
         reg = Registry()
@@ -104,6 +107,7 @@ class TestRegistry:
 # Core — ResidencyTracker
 # ---------------------------------------------------------------------------
 
+
 class TestResidencyTracker:
     def test_track_and_query(self):
         tracker = ResidencyTracker()
@@ -133,6 +137,7 @@ class TestResidencyTracker:
 # Core — Budgeter
 # ---------------------------------------------------------------------------
 
+
 class TestBudgeter:
     def test_budget_check_within_limit(self):
         b = Budgeter()
@@ -159,6 +164,7 @@ class TestBudgeter:
 # ---------------------------------------------------------------------------
 # Mock engine — Contract B HTTP surface
 # ---------------------------------------------------------------------------
+
 
 class TestMockEngine:
     @pytest.fixture(autouse=True)
