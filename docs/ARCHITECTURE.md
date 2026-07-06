@@ -63,6 +63,48 @@ Endpoints mirrored:
 
 ---
 
+## Layer L5 — Data Plane / Telemetry Reservoir
+
+The data plane ingests, normalises, stores, and replays real system log data
+so that agents can reason over historic and live telemetry without touching a
+GPU.
+
+### Decision D-01 — DuckDB + Parquet
+
+Raw records are persisted in a single DuckDB database file
+(`data/store/telemetry.duckdb`).  DuckDB provides SQL over the full
+dataset in-process (no server required) and can export Parquet snapshots
+on demand for downstream consumers.
+
+```
+data/
+├── raw/                       ← downloaded log files (git-ignored)
+│   └── HDFS_2k.log
+└── store/
+    ├── telemetry.duckdb       ← primary store (D-01)
+    └── telemetry.parquet      ← snapshot export (optional)
+```
+
+### Modules
+
+| Module | Responsibility |
+|--------|----------------|
+| `ingest.py` | CLI: download → parse → normalise → write; `python -m app.dataplane.ingest --dataset hdfs_2k` |
+| `parser.py` | Dialect-specific line parser (HDFS format: `YYMMDD HHMMSS pid LEVEL Component: message`). Skips malformed lines; never raises |
+| `normalizer.py` | Maps parsed lines to canonical `TelemetryRecord(ts, node, level, component, message, dialect, raw_line)`. Extensible: add dialects by subclassing `BaseNormalizer` |
+| `store.py` | `TelemetryStore`: `write_records()`, `query(sql)`, `time_range()`, `count()`, `to_parquet()` |
+| `replayer.py` | Async generator `stream()` emitting records in chronological order with configurable `speed_factor` (default 60 → 1 real hour = 1 demo minute) |
+
+### Adding a new log dialect
+
+1. Add a `BaseNormalizer` subclass in `normalizer.py` with `dialect = "my_dialect"`.
+2. Register it in the `NORMALIZERS` dict.
+3. Add a dataset entry in `ingest.py`'s `_DATASETS` registry.
+
+No other files need changing.
+
+---
+
 ## Data Flow (happy path)
 
 ```

@@ -45,4 +45,7 @@ Thumbs.db
 # Docker
 *.log
 
+# raw data + telemetry store (never commit)
+data/
+
 .claude/
