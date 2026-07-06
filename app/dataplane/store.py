@@ -1,5 +1,5 @@
 """
-TelemetryStore — Band C, Layer L5, decision D-01.
+TelemetryStore — Band A, Layer L5, decision D-01.
 
 Persistent DuckDB database under data/store/telemetry.duckdb.
 Parquet snapshots can be exported on demand.

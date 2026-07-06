@@ -11,7 +11,7 @@ between agents.
 
 ---
 
-## Band A — Contract Layer
+## Contract Layer (Contract A)
 
 Defines the *interfaces* that all runtime components program against.
 No GPU or inference code lives here.
@@ -43,14 +43,14 @@ the measured budget sheet (**D-03**) from the live MI300X.
 
 ---
 
-## Band C — Application Layer
+## Band A — Application Layers (L5–L8)
 
-| Package | Responsibility |
-|---------|----------------|
-| `orchestrator/` | Receives tasks, routes to agents, aggregates results |
-| `agents/` | Five domain agents (triage, correlator, hunter, topology, reporter) |
-| `adapter/` | Translates OpenAI-compatible vLLM API (Contract B) to internal calls |
-| `dataplane/` | Zero-copy tensor references passed between agents via HBM3 handles |
+| Layer | Package | Responsibility |
+|-------|---------|----------------|
+| L8 | `app/orchestrator/` | Deterministic async state machine (**D-02**): `INTAKE → TRIAGE → FAN_OUT → JOIN → REPORTER → EMIT`. Per-worker timeout at JOIN; timeout or twice-invalid output degrades that artifact to `{"status": "inconclusive"}` and the pipeline continues. Append-only `EventLog` (feeds dashboard L9). Burst intake: N WARN/ERROR records in a sliding window opens a case. `run_demo.py` runs the whole loop end-to-end |
+| L7 | `app/agents/` | Five agents. `run(case)` = lease (Contract A) → materialize → generate **through the core** → parse (fence-tolerant) → schema-validated `Artifact`. Hunter augments its prompt with SQL evidence from the TelemetryStore |
+| L6 | `app/adapter/` | Role prompt templates (`[ROLE:name]` markers, JSON-only output), `DigestBuilder` (compact master context via SQL — materialized and pinned at boot), Contract B client |
+| L5 | `app/dataplane/` | Telemetry reservoir (see the Layer L5 section above) |
 
 ---
 

@@ -46,7 +46,9 @@ class LazyMaterializer:
         self.prefills_performed = 0
         self.prefills_avoided = 0
 
-    async def materialize(self, context_id: str, model: str) -> MaterializedHandle:
+    async def materialize(
+        self, context_id: str, model: str, context_text: str | None = None
+    ) -> MaterializedHandle:
         cached = self._handles.get(model)
         if cached is not None:
             self.prefills_avoided += 1
@@ -60,7 +62,7 @@ class LazyMaterializer:
                 self.prefills_avoided += 1
                 return cached
 
-            await self._prefill(context_id, model)
+            await self._prefill(context_id, model, context_text)
             handle = MaterializedHandle(
                 handle_id=uuid.uuid4().hex,
                 model=model,
@@ -74,11 +76,14 @@ class LazyMaterializer:
     def get_handle(self, model: str) -> MaterializedHandle | None:
         return self._handles.get(model)
 
-    async def _prefill(self, context_id: str, model: str) -> None:
+    async def _prefill(self, context_id: str, model: str, context_text: str | None) -> None:
         engine = self._registry.resolve(model)
         client = ContractBClient(engine.base_url, transport=self._transport)
+        content = f"[master-prefill] context_id={context_id}"
+        if context_text:
+            content = f"{content}\n{context_text}"
         await client.chat_completion(
             model=model,
-            messages=[{"role": "system", "content": f"[master-prefill] context_id={context_id}"}],
+            messages=[{"role": "system", "content": content}],
             max_tokens=1,
         )

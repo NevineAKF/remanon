@@ -1,4 +1,4 @@
-"""Band C — zero-copy tensor handle passing between agents (stub)."""
+"""Band A, Layer L5 — zero-copy tensor handle passing between agents (stub)."""
 
 from __future__ import annotations
 

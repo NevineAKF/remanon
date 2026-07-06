@@ -1,5 +1,5 @@
 """
-Telemetry normalizer — Band C, Layer L5.
+Telemetry normalizer — Band A, Layer L5.
 
 Converts dialect-specific ParsedLine objects into canonical TelemetryRecord
 instances.  New dialects (Thunderbird, BGL, …) plug in by subclassing

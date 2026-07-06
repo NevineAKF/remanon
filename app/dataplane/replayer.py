@@ -1,5 +1,5 @@
 """
-Telemetry replayer — Band C, Layer L5.
+Telemetry replayer — Band A, Layer L5.
 
 Async generator that streams TelemetryRecord objects in original chronological
 order with configurable time compression.  The callback parameter is the

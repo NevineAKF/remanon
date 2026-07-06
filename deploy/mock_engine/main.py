@@ -12,6 +12,8 @@ Endpoints implemented:
 
 from __future__ import annotations
 
+import json
+import re
 import time
 import uuid
 
@@ -64,6 +66,112 @@ _MODELS = [
 
 _MODEL_IDS = {m["id"] for m in _MODELS}
 
+# ---------------------------------------------------------------------------
+# Deterministic role payloads (Contract B ← Layer L6 role markers)
+#
+# When a request's prompt contains [ROLE:name], the mock answers with a
+# fixed, schema-valid JSON payload for that role so agents can parse real
+# structure without a GPU.
+# ---------------------------------------------------------------------------
+
+_ROLE_RE = re.compile(r"\[ROLE:([a-z]+)\]")
+
+_ROLE_PAYLOADS: dict[str, dict] = {
+    "triage": {
+        "severity": "high",
+        "category": "storage-io",
+        "summary": "Burst of WARN/ERROR datanode events indicates degraded block transfers.",
+        "routing": ["correlator", "hunter", "topology"],
+        "confidence": 0.86,
+        "hbm3_handle": None,
+    },
+    "correlator": {
+        "clusters": [
+            {
+                "cluster_id": "c-1",
+                "members": ["blk_-1608999687919862906", "blk_8229193803249955061"],
+                "score": 0.83,
+                "label": "broken-pipe-transfers",
+            }
+        ],
+        "cross_references": [],
+        "hbm3_handle": None,
+    },
+    "hunter": {
+        "findings": [
+            {
+                "finding_id": "f-1",
+                "title": "Repeated block transfer failures across datanodes",
+                "severity": "high",
+                "evidence": [
+                    "java.io.IOException: Broken pipe",
+                    "java.io.IOException: Connection reset by peer",
+                ],
+                "mitre_technique": None,
+                "confidence": 0.78,
+            }
+        ],
+        "search_depth": 2,
+        "hbm3_handle": None,
+    },
+    "topology": {
+        "nodes": [
+            {
+                "node_id": "10.250.19.102",
+                "kind": "host",
+                "label": "datanode-10.250.19.102",
+                "attributes": {},
+            },
+            {
+                "node_id": "10.251.73.220",
+                "kind": "host",
+                "label": "datanode-10.251.73.220",
+                "attributes": {},
+            },
+        ],
+        "edges": [
+            {
+                "source": "10.250.19.102",
+                "target": "10.251.73.220",
+                "relation": "block_transfer",
+                "weight": 1.0,
+            }
+        ],
+        "hbm3_handle": None,
+    },
+    "reporter": {
+        "title": "RCA: degraded HDFS block replication",
+        "executive_summary": (
+            "A burst of WARN/ERROR events shows repeated block-transfer failures "
+            "between datanodes. Root cause: network instability on the "
+            "inter-datanode link causing broken pipes and connection resets."
+        ),
+        "sections": [
+            {
+                "heading": "Findings",
+                "body": "Repeated broken-pipe failures during block transfer.",
+                "severity": "high",
+            },
+            {
+                "heading": "Recommendation",
+                "body": "Inspect the NIC and switch link between the affected datanodes.",
+                "severity": None,
+            },
+        ],
+        "source_artifacts": [],
+        "overall_severity": "high",
+        "hbm3_handle": None,
+    },
+}
+
+
+def _detect_role(messages: list[ChatMessage]) -> str | None:
+    for msg in messages:
+        match = _ROLE_RE.search(msg.content)
+        if match:
+            return match.group(1)
+    return None
+
 
 # ---------------------------------------------------------------------------
 # Request / Response schemas (OpenAI-compatible subset)
@@ -106,16 +214,19 @@ async def chat_completions(req: ChatCompletionRequest) -> dict:
     if req.stream:
         raise HTTPException(status_code=400, detail="Streaming not supported by mock engine.")
 
-    last_user_msg = next(
-        (m.content for m in reversed(req.messages) if m.role == "user"),
-        "(no user message)",
-    )
-
-    mock_text = (
-        f"[MOCK ENGINE] Model={req.model} | "
-        f"prompt_preview={last_user_msg[:80]!r} | "
-        f"max_tokens={req.max_tokens} | temperature={req.temperature}"
-    )
+    role = _detect_role(req.messages)
+    if role in _ROLE_PAYLOADS:
+        mock_text = json.dumps(_ROLE_PAYLOADS[role])
+    else:
+        last_user_msg = next(
+            (m.content for m in reversed(req.messages) if m.role == "user"),
+            "(no user message)",
+        )
+        mock_text = (
+            f"[MOCK ENGINE] Model={req.model} | "
+            f"prompt_preview={last_user_msg[:80]!r} | "
+            f"max_tokens={req.max_tokens} | temperature={req.temperature}"
+        )
     prompt_tokens = sum(len(m.content.split()) for m in req.messages)
     completion_tokens = len(mock_text.split())
 

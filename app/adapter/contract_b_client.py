@@ -1,4 +1,4 @@
-"""Band C — Contract B adapter: translates internal calls to the OpenAI-compatible vLLM API."""
+"""Band A, Layer L6 — Contract B adapter: internal calls → OpenAI-compatible vLLM API."""
 
 from __future__ import annotations
 

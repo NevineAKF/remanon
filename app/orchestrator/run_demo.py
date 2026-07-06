@@ -1,0 +1,176 @@
+"""
+Band A, Layer L8 — end-to-end demo CLI.
+
+Boots the core (materialize + pin masters via the mock engine), streams the
+telemetry store through the Replayer, opens cases via the burst rule, runs
+the full pipeline, and prints each verdict plus a final metrics snapshot.
+
+Usage:
+    python -m app.orchestrator.run_demo --log-file tests/fixtures/hdfs_sample.log --speed 1000
+    python -m app.orchestrator.run_demo --db data/store/telemetry.duckdb --speed 3600
+"""
+
+from __future__ import annotations
+
+import asyncio
+from pathlib import Path
+
+import httpx
+import typer
+
+from app.adapter.digest import DigestBuilder
+from app.agents.base import MASTER_CONTEXT_ID, BaseAgent
+from app.agents.correlator_agent import CorrelatorAgent
+from app.agents.hunter_agent import HunterAgent
+from app.agents.reporter_agent import ReporterAgent
+from app.agents.topology_agent import TopologyAgent
+from app.agents.triage_agent import TriageAgent
+from app.dataplane.normalizer import HDFSNormalizer
+from app.dataplane.parser import parse_file
+from app.dataplane.replayer import stream
+from app.dataplane.store import TelemetryStore
+from app.orchestrator.orchestrator import BurstDetector, EventLog, Orchestrator
+from contracts.contract_a import Artifact
+from core.budgeter import MemoryBudgeter
+from core.generator import CoreGenerator
+from core.materializer import LazyMaterializer
+from core.memory_model import DEFAULT_MODELS, MemoryModel
+from core.metrics import CoreMetrics
+from core.registry import EngineRegistry, default_engines
+from core.residency import ResidencyManager
+from deploy.mock_engine.main import app as mock_app
+
+cli = typer.Typer(add_completion=False)
+
+_LOG_FILE_OPTION = typer.Option(None, help="Raw HDFS log to load instead of the DuckDB store.")
+_DB_OPTION = typer.Option(Path("data/store/telemetry.duckdb"), help="TelemetryStore DuckDB path.")
+
+
+@cli.command()
+def demo(
+    log_file: Path = _LOG_FILE_OPTION,
+    db: Path = _DB_OPTION,
+    speed: float = typer.Option(60.0, help="Replay speed factor (log-seconds per wall-second)."),
+    threshold: int = typer.Option(5, help="WARN/ERROR count that opens a case."),
+    window_s: float = typer.Option(60.0, help="Sliding window (log-seconds) for the burst rule."),
+    base_url: str = typer.Option(
+        "", help="Live Contract B engine URL; empty = in-process mock engine."
+    ),
+    max_cases: int = typer.Option(5, help="Stop after this many cases."),
+) -> None:
+    asyncio.run(_run(log_file, db, speed, threshold, window_s, base_url, max_cases))
+
+
+async def _run(
+    log_file: Path | None,
+    db: Path,
+    speed: float,
+    threshold: int,
+    window_s: float,
+    base_url: str,
+    max_cases: int,
+) -> None:
+    # --- telemetry store ---
+    if log_file is not None:
+        store = TelemetryStore(Path(":memory:"))
+        parsed = parse_file(log_file)
+        normalizer = HDFSNormalizer()
+        store.write_records([normalizer.normalize(p) for p in parsed.records])
+        typer.echo(f"Loaded {store.count()} records from {log_file} (skipped {parsed.skipped})")
+    else:
+        store = TelemetryStore(db)
+        if store.count() == 0:
+            typer.echo(
+                "Store is empty — run `python -m app.dataplane.ingest --dataset hdfs_2k` first, "
+                "or pass --log-file.",
+                err=True,
+            )
+            raise typer.Exit(1)
+        typer.echo(f"Using store {db} with {store.count()} records")
+
+    # --- Contract B endpoint ---
+    if base_url:
+        transport: httpx.AsyncBaseTransport | None = None
+        engine_url = base_url
+    else:
+        transport = httpx.ASGITransport(app=mock_app)
+        engine_url = "http://mock-engine"
+        typer.echo("Contract B: in-process mock engine")
+
+    # --- boot the core ---
+    memory_model = MemoryModel()
+    budgeter = MemoryBudgeter(memory_model)
+    residency = ResidencyManager(on_release=lambda lease: budgeter.release_delta(lease.lease_id))
+    registry = EngineRegistry(transport=transport)
+    for engine in default_engines(engine_url):
+        registry.register(engine)
+    materializer = LazyMaterializer(registry, transport=transport)
+    generator = CoreGenerator(registry, materializer, transport=transport)
+    metrics = CoreMetrics(
+        memory_model=memory_model,
+        materializer=materializer,
+        residency=residency,
+        budgeter=budgeter,
+    )
+
+    digest = DigestBuilder(store).build()
+    typer.echo("--- master digest ---")
+    typer.echo(digest)
+    for model in DEFAULT_MODELS:
+        await budgeter.pin_model(model)
+        await materializer.materialize(MASTER_CONTEXT_ID, model, context_text=digest)
+    typer.echo(f"Pinned + materialized {len(DEFAULT_MODELS)} masters")
+
+    # --- agents + orchestrator ---
+    deps: dict = {"residency": residency, "materializer": materializer, "generator": generator}
+    agents: dict[str, BaseAgent] = {
+        "triage": TriageAgent(**deps),
+        "correlator": CorrelatorAgent(**deps),
+        "hunter": HunterAgent(store=store, **deps),
+        "topology": TopologyAgent(**deps),
+        "reporter": ReporterAgent(**deps),
+    }
+    orchestrator = Orchestrator(agents, EventLog())
+    detector = BurstDetector(threshold=threshold, window_s=window_s)
+
+    # --- replay + pipeline ---
+    cases_processed = 0
+    typer.echo(f"--- replaying at {speed}x ---")
+    async for record in stream(store.all_records(), speed_factor=speed):
+        case = detector.observe(record)
+        if case is None:
+            continue
+        typer.echo(f"\nCASE OPENED {case['case_id']} ({case['record_count']} alert records)")
+        verdict = await orchestrator.run_case(case)
+        cases_processed += 1
+        _print_verdict(verdict)
+        if cases_processed >= max_cases:
+            typer.echo(f"Reached --max-cases={max_cases}, stopping replay.")
+            break
+
+    # --- final metrics snapshot ---
+    snapshot = metrics.export()
+    typer.echo("\n--- metrics snapshot ---")
+    typer.echo(f"cases_processed      : {cases_processed}")
+    typer.echo(f"prefills_performed   : {snapshot['prefills_performed']}")
+    typer.echo(f"prefills_avoided     : {snapshot['prefills_avoided']}")
+    typer.echo(f"gb_saved_vs_per_agent: {snapshot['gb_saved_vs_per_agent']}")
+    typer.echo(f"active_leases        : {snapshot['active_leases']}")
+    typer.echo(f"ledger.used_gb       : {snapshot['ledger']['used_gb']}")
+    typer.echo(f"event_log entries    : {len(orchestrator.event_log)}")
+    store.close()
+
+
+def _print_verdict(verdict: Artifact | dict) -> None:
+    if isinstance(verdict, Artifact):
+        payload = verdict.payload
+        typer.echo(f"VERDICT [{payload['overall_severity'].upper()}] {payload['title']}")
+        typer.echo(f"  {payload['executive_summary']}")
+        for section in payload["sections"]:
+            typer.echo(f"  - {section['heading']}: {section['body']}")
+    else:
+        typer.echo(f"VERDICT (degraded): {verdict}")
+
+
+if __name__ == "__main__":
+    cli()

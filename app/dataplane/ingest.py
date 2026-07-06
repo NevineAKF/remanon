@@ -1,5 +1,5 @@
 """
-Ingest CLI — Band C, Layer L5.
+Ingest CLI — Band A, Layer L5.
 
 Usage:
     python -m app.dataplane.ingest --dataset hdfs_2k

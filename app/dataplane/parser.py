@@ -1,5 +1,5 @@
 """
-HDFS log parser — Band C, Layer L5.
+HDFS log parser — Band A, Layer L5.
 
 Converts raw HDFS log lines into ParsedLine dataclasses.
 Malformed lines are counted and skipped; the parser never raises.
