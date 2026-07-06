@@ -1,0 +1,52 @@
+081109 203518 148 INFO dfs.DataNode$DataXceiver: Receiving block blk_-1608999687919862906 src: /10.250.19.102:54026 dest: /10.250.19.102:50010
+081109 203518 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: /user/root/rand3/_temporary/_task_200811092030_0001_m_001763_0/part-01763. blk_38865049064139660
+081109 203518 148 INFO dfs.DataNode$PacketResponder: PacketResponder 1 for block blk_38865049064139660 terminating
+081109 203519 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.73.220:50010 is added to blk_7503483334202473044 size 67108864
+081109 203519 148 INFO dfs.DataNode$DataXceiver: Receiving block blk_8229193803249955061 src: /10.251.197.232:55069 dest: /10.251.197.232:50010
+081109 203519 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.197.232:50010 is added to blk_8229193803249955061 size 67108864
+081109 203520 148 INFO dfs.DataNode$DataXceiver: Receiving block blk_2107288202051227467 src: /10.250.10.6:54064 dest: /10.250.10.6:50010
+081109 203520 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.250.10.6:50010 is added to blk_2107288202051227467 size 67108864
+081109 203520 148 INFO dfs.DataNode$PacketResponder: PacketResponder 2 for block blk_8229193803249955061 terminating
+081109 203521 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: /user/root/rand5/_temporary/_task_200811092032_0001_m_001764_0/part-01764. blk_-5893516792723493050
+081109 203521 148 INFO dfs.DataNode$DataXceiver: Receiving block blk_-5893516792723493050 src: /10.251.73.220:53505 dest: /10.251.73.220:50010
+081109 203521 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.73.220:50010 is added to blk_-5893516792723493050 size 67108864
+081109 203521 148 INFO dfs.DataNode$DataXceiver: Receiving block blk_6454300896110056571 src: /10.250.19.102:54028 dest: /10.250.19.102:50010
+081109 203522 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.250.19.102:50010 is added to blk_6454300896110056571 size 67108864
+081109 203522 148 INFO dfs.DataNode$PacketResponder: PacketResponder 0 for block blk_-5893516792723493050 terminating
+081109 203523 148 WARN dfs.DataNode$DataXceiver: writeBlock blk_-1608999687919862906 received exception java.io.IOException: Connection reset by peer
+081109 203523 35 WARN dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: Redundant addStoredBlock request received for blk_38865049064139660 on 10.251.197.232:50010 size 67108864
+081109 203523 148 ERROR dfs.DataNode: DatanodeRegistration(10.250.19.102:50010,storageID=DS-1230897601-10.250.19.102-50010-1225553771503,infoPort=50075,ipcPort=50020):Failed to transfer blk_-1608999687919862906 to /10.251.73.220:50010 got java.io.IOException: Connection refused
+081109 203524 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.250.19.102:50010 is added to blk_-1608999687919862906 size 67108864
+081109 203524 148 INFO dfs.DataNode$DataXceiver: Receiving block blk_3587508140051953248 src: /10.251.197.232:55071 dest: /10.251.197.232:50010
+081109 203524 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.197.232:50010 is added to blk_3587508140051953248 size 67108864
+081109 203525 148 INFO dfs.DataNode$PacketResponder: PacketResponder 1 for block blk_3587508140051953248 terminating
+081109 203525 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: /user/root/rand7/_temporary/_task_200811092035_0001_m_001765_0/part-01765. blk_-7105333462006249059
+081109 203525 148 INFO dfs.DataNode$DataXceiver: Receiving block blk_-7105333462006249059 src: /10.250.10.6:54066 dest: /10.250.10.6:50010
+081109 203526 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.250.10.6:50010 is added to blk_-7105333462006249059 size 67108864
+081109 203526 148 INFO dfs.DataNode$PacketResponder: PacketResponder 0 for block blk_-7105333462006249059 terminating
+081109 203526 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.73.220:50010 is added to blk_-7105333462006249059 size 67108864
+081109 203527 148 INFO dfs.DataNode$DataXceiver: Receiving block blk_1266454301266432375 src: /10.251.73.220:53507 dest: /10.251.73.220:50010
+081109 203527 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.73.220:50010 is added to blk_1266454301266432375 size 67108864
+081109 203527 148 INFO dfs.DataNode$PacketResponder: PacketResponder 2 for block blk_1266454301266432375 terminating
+081109 203528 35 WARN dfs.DataNode: DatanodeRegistration(10.250.10.6:50010,storageID=DS-1481345635-10.250.10.6-50010-1225620007014,infoPort=50075,ipcPort=50020):Exception in receiveBlock for block blk_2107288202051227467
+MALFORMED LINE WITHOUT PROPER FORMAT should be skipped by parser
+081109 203529 148 INFO dfs.DataNode$DataXceiver: Receiving block blk_4651007843391369658 src: /10.250.19.102:54030 dest: /10.250.19.102:50010
+081109 203529 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.250.19.102:50010 is added to blk_4651007843391369658 size 67108864
+081109 203529 148 INFO dfs.DataNode$PacketResponder: PacketResponder 0 for block blk_4651007843391369658 terminating
+081109 203530 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: /user/root/rand9/_temporary/_task_200811092040_0001_m_001766_0/part-01766. blk_-6026382684624312546
+081109 203530 148 INFO dfs.DataNode$DataXceiver: Receiving block blk_-6026382684624312546 src: /10.251.197.232:55073 dest: /10.251.197.232:50010
+081109 203530 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.197.232:50010 is added to blk_-6026382684624312546 size 67108864
+081109 203531 148 INFO dfs.DataNode$PacketResponder: PacketResponder 1 for block blk_-6026382684624312546 terminating
+081109 203531 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.73.220:50010 is added to blk_-6026382684624312546 size 67108864
+081109 203531 148 ERROR dfs.DataNode: DatanodeRegistration(10.251.197.232:50010,storageID=DS-1795649981-10.251.197.232-50010-1225620011493,infoPort=50075,ipcPort=50020):Exception in receiveBlock for block blk_8229193803249955061 java.io.IOException: Broken pipe
+081109 203532 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: /user/root/rand11/_temporary/_task_200811092042_0001_m_001767_0/part-01767. blk_3587671967804536834
+081109 203532 148 INFO dfs.DataNode$DataXceiver: Receiving block blk_3587671967804536834 src: /10.250.10.6:54068 dest: /10.250.10.6:50010
+081109 203532 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.250.10.6:50010 is added to blk_3587671967804536834 size 67108864
+081109 203533 148 INFO dfs.DataNode$PacketResponder: PacketResponder 0 for block blk_3587671967804536834 terminating
+081109 203533 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.73.220:50010 is added to blk_3587671967804536834 size 67108864
+081109 203533 148 WARN dfs.DataNode$DataXceiver: writeBlock blk_6454300896110056571 received exception java.io.IOException: Broken pipe
+081109 203534 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.allocateBlock: /user/root/rand13/_temporary/_task_200811092044_0001_m_001768_0/part-01768. blk_-4692538459980298804
+081109 203534 148 INFO dfs.DataNode$DataXceiver: Receiving block blk_-4692538459980298804 src: /10.251.73.220:53509 dest: /10.251.73.220:50010
+081109 203534 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.251.73.220:50010 is added to blk_-4692538459980298804 size 67108864
+081109 203535 148 INFO dfs.DataNode$PacketResponder: PacketResponder 2 for block blk_-4692538459980298804 terminating
+081109 203535 35 INFO dfs.FSNamesystem: BLOCK* NameSystem.addStoredBlock: blockMap updated: 10.250.19.102:50010 is added to blk_-4692538459980298804 size 67108864

@@ -49,3 +49,5 @@ Thumbs.db
 data/
 
 .claude/
+
+!tests/fixtures/*.log
