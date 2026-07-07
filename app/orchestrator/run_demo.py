@@ -205,10 +205,30 @@ async def _run(
     # --- replay + pipeline ---
     cases_processed = 0
     typer.echo(f"--- replaying at {speed}x ---")
+    event_log = orchestrator.event_log
     async for record in stream(store.all_records(), speed_factor=speed):
+        # Feed the observation plane: one "record" event per replayed record,
+        # so every particle the L9 theater draws is a real Loghub line.
+        event_log.append(
+            "replay",
+            "record",
+            ts=record.ts.isoformat(),
+            node=record.node,
+            level=record.level,
+            component=record.component,
+            message=record.message[:160],
+            dialect=record.dialect,
+        )
         case = detector.observe(record)
         if case is None:
             continue
+        event_log.append(
+            case["case_id"],
+            "case_open",
+            opened_at=case["opened_at"],
+            record_count=case["record_count"],
+            trigger_records=case["trigger_records"],
+        )
         nodes = ",".join(sorted({t["node"] for t in case["trigger_records"]}))
         typer.echo(
             f"\n[case-open] t={case['opened_at']} triggers={case['record_count']} "

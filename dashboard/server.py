@@ -32,6 +32,10 @@ class DashboardSources:
     metrics: CoreMetrics
     memory_model: MemoryModel
     residency: ResidencyManager
+    # Deployment labels for the observation plane; capacity itself always
+    # comes from the MemoryModel so the two can never disagree.
+    hardware_name: str = "AMD Instinct™ MI300X"
+    memory_tech: str = "HBM3"
 
 
 def create_dashboard_app(sources: DashboardSources, last_events: int = 200) -> FastAPI:
@@ -64,6 +68,10 @@ def create_dashboard_app(sources: DashboardSources, last_events: int = 200) -> F
             "metrics": sources.metrics.export(),
             "capacity_gb": mm.total_capacity_gb,
             "headroom_gb": mm.headroom_gb,
+            "hardware": (
+                f"{sources.hardware_name} · {mm.total_capacity_gb:g} GB {sources.memory_tech}"
+            ),
+            "memory_tech": sources.memory_tech,
             "masters_config": [
                 {"model": spec.name, "weights_gb": spec.weights_gb, "master_gb": spec.master_gb}
                 for spec in mm.models.values()

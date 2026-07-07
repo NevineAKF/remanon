@@ -8,557 +8,1023 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --void:   #07090D;
-  --panel:  #0E141B;
-  --panel2: #111922;
-  --hair:   #22303D;
-  --ink:    #E9F0F6;
-  --muted:  #7C8DA0;
-  --dim:    #48586A;
-  --cyan:    #29E0F5;
-  --crimson: #E8434A;
-  --azure:   #4C8DFF;
-  --emerald: #2FBF8F;
-  --amber:   #F5A623;
-  --crit:    #FF4B57;
+:root{
+  --void:#07090D; --panel:#0E141B; --hair:#22303D;
+  --ink:#E9F0F6; --muted:#7C8DA0; --dim:#48586A;
+  --cyan:#29E0F5; --crimson:#E8434A; --azure:#4C8DFF;
+  --emerald:#2FBF8F; --amber:#F5A623; --crit:#FF4B57;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
+html,body{height:100%;overflow:hidden}
 body{
-  background:
-    radial-gradient(1100px 620px at 78% -12%,rgba(41,224,245,.05),transparent 60%),
-    radial-gradient(800px 560px at -6% 112%,rgba(232,67,74,.05),transparent 55%),
-    var(--void);
+  background:var(--void);
   color:var(--ink);
   font-family:"JetBrains Mono",ui-monospace,monospace;
   -webkit-font-smoothing:antialiased;
-  overflow-x:hidden;
+  display:flex;flex-direction:column;
 }
-.wrap{max-width:1600px;margin:0 auto;padding:16px 18px 16px;display:flex;flex-direction:column;height:100vh;gap:10px}
-
-/* ===== HEADER ===== */
 header{
-  display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;
-  border-bottom:1px solid var(--hair);padding-bottom:12px;flex-shrink:0;
+  display:flex;justify-content:space-between;align-items:flex-end;gap:18px;
+  padding:12px 22px 10px;border-bottom:1px solid var(--hair);flex-shrink:0;
 }
-.eyebrow{font-size:10px;letter-spacing:.34em;color:var(--amber);text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:7px}
-.blip{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px var(--amber);flex-shrink:0}
-@keyframes blip{0%,100%{opacity:1}50%{opacity:.2}}
-.blip{animation:blip 1.7s infinite}
-h1{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:clamp(18px,2.8vw,34px);line-height:1;letter-spacing:-.01em}
+.eyebrow{font-size:10px;letter-spacing:.34em;color:var(--amber);text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.blip{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px var(--amber);animation:blip 1.7s infinite;flex-shrink:0}
+@keyframes blip{0%,100%{opacity:1}50%{opacity:.25}}
+h1{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:clamp(17px,2.4vw,30px);line-height:1;letter-spacing:-.01em}
 h1 .r{color:var(--amber)}
-.tagline{color:var(--muted);font-size:11px;margin-top:6px;line-height:1.6}
+.tagline{color:var(--muted);font-size:11px;margin-top:5px;line-height:1.5}
 .tagline b{color:var(--ink)}
-.hbm-mini{font-family:"Chakra Petch",sans-serif;text-align:right;font-size:11px;color:var(--dim);line-height:1.85;flex-shrink:0}
-.hbm-mini strong{color:var(--cyan);font-size:22px;font-weight:700;display:block;line-height:1.1}
+.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.hbm-mini{font-family:"Chakra Petch",sans-serif;text-align:right;font-size:10.5px;color:var(--dim);line-height:1.7}
+.hbm-mini strong{color:var(--cyan);font-size:20px;font-weight:700}
 .hbm-mini .a{color:var(--amber)}
-.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
-#conn{font-size:10px;letter-spacing:.1em;display:flex;align-items:center;gap:6px}
+.hbm-mini .hw{letter-spacing:.14em;text-transform:uppercase;font-size:9.5px}
+#conn{font-size:10px;letter-spacing:.1em;display:flex;align-items:center;gap:6px;color:var(--muted)}
 #conn .dot{width:6px;height:6px;border-radius:50%;background:var(--dim)}
 #conn.live .dot{background:var(--emerald);box-shadow:0 0 8px var(--emerald);animation:blip 2s infinite}
 #conn.off .dot{background:var(--crit)}
-
-/* ===== CASE ALERT ===== */
-#case-alert{
-  display:none;overflow:hidden;position:relative;
-  background:linear-gradient(90deg,rgba(245,166,35,.12),rgba(232,67,74,.08),transparent);
-  border:1px solid rgba(245,166,35,.35);border-radius:4px;
-  padding:7px 16px;
-  font-family:"Chakra Petch",sans-serif;font-size:11.5px;letter-spacing:.08em;color:var(--amber);
-  flex-shrink:0;
+nav{display:flex;gap:8px;align-items:center;padding:8px 22px;flex-shrink:0;border-bottom:1px solid var(--hair)}
+.act-btn{
+  font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:11.5px;letter-spacing:.08em;
+  border:1px solid var(--hair);color:var(--muted);background:transparent;padding:8px 16px;border-radius:3px;
+  cursor:pointer;transition:.18s;display:flex;gap:8px;align-items:center;text-transform:uppercase;
 }
-#case-alert.show{display:block;animation:alertIn .45s ease}
-@keyframes alertIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
-#case-alert::before{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(90deg,transparent,rgba(245,166,35,.07),transparent);
-  animation:sweep 2.6s linear infinite;
-}
-@keyframes sweep{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
-#case-alert .cid{color:var(--ink);font-weight:700}
-
-/* ===== MAIN GRID ===== */
-.grid{
-  display:grid;
-  grid-template-columns:250px 1fr 1fr;
-  grid-template-rows:auto auto 1fr;
-  gap:9px;
-  flex:1;min-height:0;
-}
-
-/* ===== SECTION BASE ===== */
-section{
-  background:var(--panel);border:1px solid var(--hair);border-radius:5px;
-  padding:9px 11px;display:flex;flex-direction:column;overflow:hidden;min-height:0;
-}
-section > h2{
-  font-family:"Chakra Petch",sans-serif;font-size:9.5px;letter-spacing:.28em;
-  color:var(--dim);text-transform:uppercase;margin-bottom:7px;flex-shrink:0;
-}
-
-/* ===== MEMORY MAP ===== */
-#memory-panel{grid-column:1;grid-row:1/4}
-.mem-wrap{display:flex;gap:12px;flex:1;align-items:stretch;min-height:0;padding:2px 0}
-.mem-block{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0}
-.mem-col{
-  width:100%;flex:1;min-height:160px;
-  border:1px solid var(--hair);border-radius:4px;
-  display:flex;flex-direction:column-reverse;overflow:hidden;
-  background:#04070A;position:relative;
-  transition:border-color .4s,box-shadow .4s;
-}
-.mem-col.oom{border-color:var(--crit)}
-.mem-col.oom-alarm{animation:oomPulse 1.5s ease infinite}
-@keyframes oomPulse{0%,100%{box-shadow:0 0 10px rgba(255,75,87,.2)}50%{box-shadow:0 0 28px rgba(255,75,87,.5)}}
-.seg{
-  width:100%;display:flex;align-items:center;justify-content:center;
-  font-size:9px;font-weight:700;overflow:hidden;white-space:nowrap;
-  transition:height .55s ease;
-}
-.seg-weights {background:#2A4A7A;color:#9EB8D9}
-.seg-masters {background:var(--amber);color:#100B02}
-.seg-deltas  {background:#1A6A5E;color:#7ED4CA}
-.seg-headroom{background:repeating-linear-gradient(45deg,#17232C 0 5px,#0E141B 5px 10px);color:var(--dim)}
-.seg-free    {background:transparent;color:var(--dim);border-top:1px dashed var(--hair)}
-.seg-oomcap  {background:var(--crit);color:#fff;position:absolute;top:0;left:0;right:0;height:9%}
-.oom-badge{
-  position:absolute;top:7px;left:50%;transform:translateX(-50%);
-  background:var(--crit);color:#fff;font-size:8.5px;font-weight:700;
-  padding:2px 6px;border-radius:2px;white-space:nowrap;letter-spacing:.06em;
-  animation:oomPulse 1.5s ease infinite;
-}
-.mem-cap{margin-top:5px;font-family:"Chakra Petch",sans-serif;font-size:10px;color:var(--dim);text-align:center;line-height:1.6}
-.mem-legend{margin-top:7px;font-size:9px;color:var(--dim);display:flex;flex-wrap:wrap;gap:5px 9px;flex-shrink:0}
-.mem-legend em{font-style:normal;display:flex;align-items:center;gap:4px}
-.dotk{width:8px;height:8px;border-radius:2px;display:inline-block}
-
-/* ===== MODEL TOWERS ===== */
-#towers-panel{grid-column:2/4;grid-row:1;min-height:165px}
-.towers-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px;flex-shrink:0}
-.towers-head h2{margin-bottom:0}
-.towers-head .cap{font-size:9.5px;color:var(--dim)}
-.towers-row{display:flex;gap:7px;flex:1;min-height:0}
-.tower{
-  flex:1;position:relative;border-radius:4px;
-  padding:8px 9px;overflow:hidden;
-  display:flex;flex-direction:column;justify-content:flex-end;
-  transition:box-shadow .35s;
-}
-.tower::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.06),transparent 40%);pointer-events:none}
-.tower.pinned{outline:2px solid var(--amber);outline-offset:-2px;box-shadow:0 0 20px rgba(245,166,35,.16),inset 0 0 26px rgba(245,166,35,.04)}
-.tower.lit{box-shadow:0 0 22px rgba(255,255,255,.1),inset 0 0 18px rgba(255,255,255,.04)}
-.pin-tag{
-  position:absolute;top:6px;left:7px;
-  font-family:"Chakra Petch",sans-serif;font-size:8px;font-weight:700;letter-spacing:.16em;
-  color:#100B02;background:var(--amber);padding:1px 6px;border-radius:2px;z-index:3;
-}
-.share-tag{
-  position:absolute;top:6px;right:7px;
-  font-size:8px;letter-spacing:.1em;color:var(--amber);
-  border:1px solid var(--amber);padding:1px 6px;border-radius:2px;z-index:3;
-  background:rgba(7,9,13,.65);
-}
-.t-wins{position:absolute;top:24px;left:0;right:0;display:flex;flex-wrap:wrap;gap:3px;padding:0 8px;z-index:2;pointer-events:none}
-.win{width:8px;height:8px;border-radius:1px;background:rgba(255,255,255,.09);transition:background .3s}
-.win.lit{animation:winPulse 1.3s ease infinite}
-@keyframes winPulse{0%,100%{opacity:.55}50%{opacity:1;filter:brightness(1.7)}}
-.t-name{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:clamp(9px,1.1vw,12px);line-height:1.2;position:relative;z-index:2}
-.t-gb{font-size:9px;opacity:.8;margin-top:2px;position:relative;z-index:2}
-.t-agents{font-size:8.5px;margin-top:5px;opacity:.9;position:relative;z-index:2;line-height:1.5}
-
-/* ===== KPI ROW ===== */
-#kpi-panel{grid-column:2/4;grid-row:2}
-.kpis{display:flex;gap:7px}
-.kpi{
-  flex:1;text-align:center;padding:7px 5px;
-  background:var(--panel2);border:1px solid var(--hair);border-radius:4px;
-}
-.kpi-v{
-  font-family:"Chakra Petch",sans-serif;
-  font-size:clamp(20px,2.6vw,32px);font-weight:700;line-height:1;color:var(--ink);
-}
-.kpi-v.amber{color:var(--amber);text-shadow:0 0 16px rgba(245,166,35,.28)}
-.kpi-k{font-size:8.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.13em;margin-top:3px}
-
-/* ===== AGENT STREAM ===== */
-#stream-panel{grid-column:2;grid-row:3}
-#stream{flex:1;overflow-y:auto;font-size:10.5px;line-height:1.6;scrollbar-width:thin;scrollbar-color:var(--hair) transparent}
-#stream .ln{padding:1px 0;white-space:nowrap}
-#stream .ts{color:var(--dim)}
-#stream .dg{color:var(--crit);font-weight:700}
-
-/* ===== VERDICTS ===== */
-#verdicts-panel{grid-column:3;grid-row:3}
-#verdicts{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--hair) transparent}
-.verdict{
-  border-left:3px solid var(--amber);background:var(--panel2);
-  margin-bottom:7px;padding:7px 10px;border-radius:0 4px 4px 0;
-  opacity:0;transform:translateY(8px);
-  animation:verdIn .45s ease forwards;
-}
-@keyframes verdIn{to{opacity:1;transform:none}}
-.v-head{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.v-title{font-family:"Chakra Petch",sans-serif;font-size:11.5px;font-weight:600;color:var(--ink)}
-.sev{font-family:"Chakra Petch",sans-serif;font-size:8.5px;font-weight:700;letter-spacing:.1em;padding:1px 7px;border-radius:2px;text-transform:uppercase}
-.sev-critical,.sev-high{background:var(--crit);color:#fff}
-.sev-medium{background:var(--amber);color:#100B02}
-.sev-low,.sev-info{background:var(--hair);color:var(--muted)}
-.verdict p{color:var(--dim);font-size:9.5px;margin-top:4px;line-height:1.6;white-space:normal}
-.empty{color:var(--dim);font-size:10.5px;font-style:italic}
-
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--hair);border-radius:2px}
-
-@media(max-width:860px){
-  .grid{grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto 1fr}
-  #memory-panel{grid-column:1/3;grid-row:1}
-  #towers-panel{grid-column:1/3;grid-row:2}
-  #kpi-panel{grid-column:1/3;grid-row:3}
-  #stream-panel{grid-column:1;grid-row:4}
-  #verdicts-panel{grid-column:2;grid-row:4}
-}
+.act-btn small{color:var(--dim);font-weight:400;letter-spacing:0;text-transform:none}
+.act-btn.on{border-color:var(--amber);color:var(--ink);box-shadow:0 0 16px rgba(245,166,35,.18)}
+.act-btn.on small{color:var(--amber)}
+#auto-btn{margin-left:auto;font-family:"Chakra Petch",sans-serif;font-size:10.5px;letter-spacing:.14em;
+  border:1px solid var(--hair);background:transparent;color:var(--dim);padding:8px 14px;border-radius:3px;cursor:pointer;transition:.18s}
+#auto-btn.on{border-color:var(--emerald);color:var(--emerald);box-shadow:0 0 14px rgba(47,191,143,.15)}
+main{flex:1;min-height:0;position:relative}
+#stage{position:absolute;inset:0;width:100%;height:100%;display:block}
 @media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+  .blip,#conn .dot{animation:none!important}
 }
 </style>
 </head>
 <body>
-<div class="wrap">
 
 <header>
   <div>
-    <div class="eyebrow"><span class="blip"></span> REMANON &middot; LIVE OPERATIONS THEATER</div>
-    <h1>ONE MEMORY. <span class="r">FIVE MINDS.</span> ZERO EVICTIONS.</h1>
-    <div class="tagline">GPU-resident shared-memory runtime &middot; AMD Instinct&trade; MI300X 192&thinsp;GB HBM3 &middot; <b>Maximum alignment, minimum detachment.</b></div>
+    <div class="eyebrow"><span class="blip"></span> REMANON</div>
+    <h1>ONE MEMORY. <span class="r">MANY MINDS.</span> ZERO EVICTIONS.</h1>
+    <div class="tagline">GPU-resident shared-memory runtime for multi-agent inference &middot; <b>Maximum alignment, minimum detachment.</b></div>
   </div>
   <div class="hdr-right">
-    <div class="hbm-mini">
-      HBM3 POOL<br>
-      <strong id="hbm-used">&mdash;</strong>
-      / <span id="hbm-cap">192</span>&thinsp;GB<br>
-      <span class="a">pinned: <span id="hbm-pinned">&mdash;</span>&thinsp;GB</span>
-    </div>
-    <div id="conn" class="off"><span class="dot"></span><span id="conn-txt">&nbsp;connecting&hellip;</span></div>
+    <div class="hbm-mini"><span id="hbm-hw" class="hw">&mdash;</span><br><strong id="hbm-used">&mdash;</strong> / <span id="hbm-cap">&mdash;</span>&thinsp;GB &nbsp;<span class="a">pinned <span id="hbm-pinned">&mdash;</span>&thinsp;GB</span></div>
+    <div id="conn" class="off"><span class="dot"></span><span id="conn-txt">connecting&hellip;</span></div>
   </div>
 </header>
 
-<div id="case-alert" role="alert">
-  <span style="letter-spacing:.2em;font-size:10px">&#9650; CASE OPEN</span>
-  &nbsp;&middot;&nbsp;
-  <span class="cid" id="alert-cid"></span>
-  <span id="alert-detail"></span>
-</div>
+<nav>
+  <button class="act-btn on" data-act="1">ACT I <small>&middot; the storm</small></button>
+  <button class="act-btn" data-act="2">ACT II <small>&middot; the living city</small></button>
+  <button class="act-btn" data-act="3">ACT III <small>&middot; the showdown</small></button>
+  <button id="auto-btn" class="on">&#9679; AUTO-DIRECTOR</button>
+</nav>
 
-<main class="grid">
+<main><canvas id="stage"></canvas></main>
 
-  <section id="memory-panel">
-    <h2>Live HBM3 Memory Map</h2>
-    <div class="mem-wrap">
-      <div class="mem-block">
-        <div class="mem-col" id="col-real"></div>
-        <div class="mem-cap">192&thinsp;GB<br>MI300X HBM3</div>
-      </div>
-      <div class="mem-block">
-        <div class="mem-col" id="col-hypo"></div>
-        <div class="mem-cap">80&thinsp;GB<br>typical GPU</div>
-      </div>
-    </div>
-    <div class="mem-legend">
-      <em><span class="dotk" style="background:#2A4A7A"></span>weights</em>
-      <em><span class="dotk" style="background:var(--amber)"></span>pinned masters</em>
-      <em><span class="dotk" style="background:#1A6A5E"></span>deltas</em>
-      <em><span class="dotk" style="background:repeating-linear-gradient(45deg,#17232C 0 4px,#0E141B 4px 8px)"></span>headroom</em>
-    </div>
-  </section>
-
-  <section id="towers-panel">
-    <div class="towers-head">
-      <h2>Model Districts &mdash; Materialized Once, Pinned Forever</h2>
-      <span class="cap">width &prop; resident GB</span>
-    </div>
-    <div class="towers-row" id="towers"></div>
-  </section>
-
-  <section id="kpi-panel">
-    <h2>Runtime Metrics</h2>
-    <div class="kpis">
-      <div class="kpi"><div class="kpi-v" id="kpi-cases">0</div><div class="kpi-k">Cases</div></div>
-      <div class="kpi"><div class="kpi-v" id="kpi-prefills">0</div><div class="kpi-k">Prefills Done</div></div>
-      <div class="kpi"><div class="kpi-v" id="kpi-avoided">0</div><div class="kpi-k">Prefills Avoided</div></div>
-      <div class="kpi"><div class="kpi-v amber" id="kpi-saved">0.0</div><div class="kpi-k">GB Saved</div></div>
-      <div class="kpi"><div class="kpi-v" id="kpi-leases">0</div><div class="kpi-k">Active Leases</div></div>
-    </div>
-  </section>
-
-  <section id="stream-panel">
-    <h2>Agent Stream</h2>
-    <div id="stream"><div class="empty">waiting for events&hellip;</div></div>
-  </section>
-
-  <section id="verdicts-panel">
-    <h2>Verdicts</h2>
-    <div id="verdicts"><div class="empty">no cases yet</div></div>
-  </section>
-
-</main>
-</div>
 <script>
 "use strict";
-/* ---- model identity -------------------------------------------------- */
+/* =====================================================================
+   REMANON · LIVE OPERATIONS THEATER — flow-first canvas build.
+   GOVERNING RULE — MOTION = DATA: every moving particle on this canvas
+   is one real record or pipeline event received over /ws/events, or one
+   real unit of a metric delta from /api/state. Nothing moves for show.
+   ===================================================================== */
+
+/* ---------- palette + identity ---------- */
+const C = {
+  void:"#07090D", panel:"#0E141B", hair:"#22303D",
+  ink:"#E9F0F6", muted:"#7C8DA0", dim:"#48586A",
+  cyan:"#29E0F5", crimson:"#E8434A", azure:"#4C8DFF",
+  emerald:"#2FBF8F", amber:"#F5A623", crit:"#FF4B57",
+};
+/* API model name → display identity. Sizes always come from /api/state;
+   display names are the target checkpoints these dev engines stand in for. */
 const MODEL_META = {
-  "remanon-triage-7b":     {raw:"#29E0F5", agents:["triage"],                shared:false},
-  "remanon-correlator-13b":{raw:"#E8434A", agents:["correlator","reporter"],  shared:true },
-  "remanon-hunter-13b":    {raw:"#4C8DFF", agents:["hunter"],                shared:false},
-  "remanon-topology-7b":   {raw:"#2FBF8F", agents:["topology"],              shared:false},
+  "remanon-triage-7b":     {disp:"gpt-oss-20b",   color:C.cyan,    agents:["triage"]},
+  "remanon-correlator-13b":{disp:"gpt-oss-120b",  color:C.crimson, agents:["correlator","reporter"], shared:true},
+  "remanon-hunter-13b":    {disp:"llama-3.3-70b", color:C.azure,   agents:["hunter"]},
+  "remanon-topology-7b":   {disp:"qwen3-32b",     color:C.emerald, agents:["topology"]},
 };
-const FALLBACK_COLORS = ["#29E0F5","#E8434A","#4C8DFF","#2FBF8F","#F5A623"];
-const AGENT_MODEL = {
-  triage:"remanon-triage-7b", correlator:"remanon-correlator-13b",
-  hunter:"remanon-hunter-13b", topology:"remanon-topology-7b",
-  reporter:"remanon-correlator-13b",
+const AGENT_META = {
+  triage:    {model:"remanon-triage-7b",      color:C.cyan,    label:"TRIAGE"},
+  correlator:{model:"remanon-correlator-13b", color:C.crimson, label:"CORRELATOR"},
+  hunter:    {model:"remanon-hunter-13b",     color:C.azure,   label:"HUNTER"},
+  topology:  {model:"remanon-topology-7b",    color:C.emerald, label:"TOPOLOGY"},
+  reporter:  {model:"remanon-correlator-13b", color:C.crimson, label:"REPORTER"},
 };
-const AGENT_COLOR = {
-  triage:"#29E0F5", correlator:"#E8434A", hunter:"#4C8DFF",
-  topology:"#2FBF8F", reporter:"#E8434A",
+const LEVEL_COLOR = {INFO:"#54667A", WARN:C.amber, ERROR:C.crimson, FATAL:C.crit};
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- tiny utils ---------- */
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const easeIO=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const easeOut=t=>1-Math.pow(1-t,3);
+const nowS=()=>performance.now()/1000;
+function hexA(hex,a){ /* hex → rgba string */
+  const n=parseInt(hex.slice(1),16);
+  return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;
+}
+/* pre-rendered glow sprites (shadowBlur is too slow at 60fps) */
+const glowCache={};
+function glow(color){
+  if(glowCache[color]) return glowCache[color];
+  const s=document.createElement("canvas"); s.width=s.height=64;
+  const g=s.getContext("2d");
+  const grad=g.createRadialGradient(32,32,0,32,32,32);
+  grad.addColorStop(0,hexA(color,.9)); grad.addColorStop(.35,hexA(color,.32)); grad.addColorStop(1,hexA(color,0));
+  g.fillStyle=grad; g.fillRect(0,0,64,64);
+  return glowCache[color]=s;
+}
+function drawGlow(ctx,color,x,y,r,alpha){
+  ctx.globalAlpha=alpha; ctx.drawImage(glow(color),x-r,y-r,r*2,r*2); ctx.globalAlpha=1;
+}
+
+/* =====================================================================
+   CANVAS
+   ===================================================================== */
+const cv=document.getElementById("stage");
+const ctx=cv.getContext("2d");
+let W=0,H=0;
+function resize(){
+  const r=cv.getBoundingClientRect(), dpr=devicePixelRatio||1;
+  W=Math.max(320,r.width); H=Math.max(240,r.height);
+  cv.width=W*dpr; cv.height=H*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+addEventListener("resize",resize);
+
+/* fonts */
+const F={
+  chakra:(px,w)=> `${w||600} ${px}px "Chakra Petch",sans-serif`,
+  mono:(px,w)=> `${w||400} ${px}px "JetBrains Mono",monospace`,
 };
 
-/* ---- KPI odometer ---------------------------------------------------- */
-const kpiT = {}, kpiD = {};
-let kpiRaf = false;
-function kpiTick() {
-  let mv = false;
-  for (const id in kpiT) {
-    const cur = kpiD[id] !== undefined ? kpiD[id] : kpiT[id];
-    const d = kpiT[id] - cur;
-    kpiD[id] = Math.abs(d) < 0.015 ? kpiT[id] : cur + d * 0.16;
-    if (Math.abs(kpiT[id] - kpiD[id]) > 0.01) mv = true;
-    const el = document.getElementById(id);
-    if (el) el.textContent = id === "kpi-saved" ? kpiD[id].toFixed(1) : Math.round(kpiD[id]);
+/* =====================================================================
+   LIVE DATA — websocket + state poll (the only two sources on screen)
+   ===================================================================== */
+const stats={
+  records:0, alerts:0, byLevel:{INFO:0,WARN:0,ERROR:0,FATAL:0},
+  arrivals:[],           // wall-clock arrival times of record events (rate meter)
+  lastAlert:null,        // last real WARN/ERROR record
+  lastRecordAt:0, dialect:"",
+  casesOpened:0, eventsSeen:0,
+};
+let state=null;                 // last /api/state snapshot
+let prevMetrics=null;           // for real metric deltas → counter pulses
+const recordQueue=[];           // records waiting to become particles (real, FIFO)
+const verdicts=[];              // {title, sev, summary, caseId, at}
+const towers=[];                // built once from masters_config
+let towersBuiltAt=0;
+
+function linesPerSec(){
+  const t=nowS(); const a=stats.arrivals;
+  while(a.length && a[0]<t-2) a.shift();
+  return a.length/2;
+}
+
+/* ---------- websocket ---------- */
+const connEl=document.getElementById("conn"), connTxt=document.getElementById("conn-txt");
+function connect(){
+  const ws=new WebSocket((location.protocol==="https:"?"wss":"ws")+"://"+location.host+"/ws/events");
+  ws.onopen =()=>{connEl.className="live"; connTxt.textContent="live";};
+  ws.onclose=()=>{connEl.className="off"; connTxt.textContent="reconnecting…"; setTimeout(connect,1200);};
+  ws.onerror=()=>ws.close();
+  ws.onmessage=m=>{ try{ onEvent(JSON.parse(m.data)); }catch(_){} };
+}
+function onEvent(ev){
+  stats.eventsSeen++;
+  const d=ev.data||{};
+  switch(ev.kind){
+    case "record":{
+      stats.records++; stats.arrivals.push(nowS()); stats.lastRecordAt=nowS();
+      if(d.dialect) stats.dialect=d.dialect;
+      const lvl=(d.level||"INFO").toUpperCase();
+      if(stats.byLevel[lvl]!==undefined) stats.byLevel[lvl]++;
+      if(lvl!=="INFO"){ stats.alerts++; stats.lastAlert=d; }
+      recordQueue.push(d);
+      if(recordQueue.length>2600) recordQueue.splice(0,recordQueue.length-2600);
+      break;
+    }
+    case "case_open":
+      stats.casesOpened++;
+      enqueueStep({type:"case_open", caseId:ev.case_id, data:d});
+      break;
+    case "state":
+      enqueueStep({type:"state", caseId:ev.case_id, state:d.state});
+      break;
+    case "worker_start":
+      enqueueStep({type:"worker_start", caseId:ev.case_id, agent:d.agent, parallel:true});
+      break;
+    case "worker_end":
+      enqueueStep({type:"worker_end", caseId:ev.case_id, agent:d.agent, parallel:true});
+      break;
+    case "artifact":{
+      let payload=null;
+      try{ payload=d.artifact_raw.payload; }catch(_){ payload=null; }
+      enqueueStep({type:"artifact", caseId:ev.case_id, agent:d.agent, payload,
+                   parallel:(d.agent!=="triage" && d.agent!=="reporter")});
+      break;
+    }
+    case "degraded":
+      enqueueStep({type:"degraded", caseId:ev.case_id, agent:d.agent, reason:d.reason,
+                   parallel:(d.agent!=="triage" && d.agent!=="reporter")});
+      break;
+    case "attempt_failed":
+      enqueueStep({type:"attempt_failed", caseId:ev.case_id, agent:d.agent, parallel:true});
+      break;
   }
-  if (mv) requestAnimationFrame(kpiTick); else kpiRaf = false;
-}
-function setKpi(id, v) {
-  kpiT[id] = v;
-  if (!kpiRaf) { kpiRaf = true; requestAnimationFrame(kpiTick); }
 }
 
-/* ---- towers ---------------------------------------------------------- */
-let towersBuilt = false;
-const towerEl = {}; // model → {el, wins}
-const activeAgents = new Set();
+/* ---------- /api/state poll ---------- */
+async function poll(){
+  try{
+    const s=await fetch("/api/state").then(r=>r.json());
+    state=s;
+    if(!towers.length && s.masters_config && s.masters_config.length) buildTowers(s.masters_config);
+    const led=s.metrics.ledger;
+    document.getElementById("hbm-hw").textContent=s.hardware||"GPU POOL";
+    document.getElementById("hbm-used").textContent=led.used_gb.toFixed(0);
+    document.getElementById("hbm-cap").textContent=s.capacity_gb;
+    document.getElementById("hbm-pinned").textContent=led.masters_gb.toFixed(0);
+    /* real metric deltas → unit pulses in Act III */
+    if(prevMetrics){
+      const dAvoid=s.metrics.prefills_avoided-prevMetrics.prefills_avoided;
+      const dSaved=s.metrics.gb_saved_vs_per_agent-prevMetrics.gb_saved_vs_per_agent;
+      if(dAvoid>0) spawnMetricPulses("avoided",dAvoid);
+      if(dSaved>0) spawnMetricPulses("saved",Math.max(1,Math.round(dSaved/2)));
+    }
+    prevMetrics=s.metrics;
+    /* verdicts (authoritative list; ws artifact steps animate them first) */
+    for(const v of s.verdicts||[]){
+      if(!verdicts.some(x=>x.caseId===v.case_id))
+        verdicts.push({caseId:v.case_id,title:v.title,sev:v.overall_severity,summary:v.executive_summary,at:nowS()});
+    }
+  }catch(_){/* server briefly unavailable */}
+}
 
-function buildTowers(config) {
-  if (towersBuilt) return;
-  towersBuilt = true;
-  const container = document.getElementById("towers");
-  container.innerHTML = "";
-  config.forEach((spec, idx) => {
-    const meta = MODEL_META[spec.model] || {};
-    const raw  = meta.raw || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
-    const ags  = meta.agents || [];
-    const totalGb = spec.weights_gb + spec.master_gb;
-    const winN = Math.min(Math.max(4, Math.floor(spec.weights_gb / 4)), 20);
-    let winsHtml = '<div class="t-wins">';
-    for (let i = 0; i < winN; i++) winsHtml += `<span class="win" style="background:${raw}2A"></span>`;
-    winsHtml += "</div>";
+/* =====================================================================
+   STEP PLAYER — the real event sequence, replayed at watchable speed.
+   Events arrive in bursts (the mock engine answers in milliseconds); the
+   player preserves exact order and identity but gives each real step a
+   minimum on-screen duration. Lane steps run in parallel, like the real
+   fan-out; a barrier (REPORTER) waits for all lanes to land.
+   ===================================================================== */
+const stepQueue=[];
+let currentStep=null, stepUntil=0;
+const lanes={};            // agent → live lane animation object
+const cases={};            // caseId → presentation state
+let caseToken=null;        // the travelling case packet {pts,t0,dur,color,label,at,hold}
+let readArcs={};           // agent → {t0, done, minUntil}
+let verdictFx=null;        // crystallization animation
+let firstCaseAt=0, firstVerdictAt=0;
 
-    const d = document.createElement("div");
-    d.className = "tower pinned";
-    d.style.flex = String(totalGb);
-    d.style.background = `linear-gradient(180deg,${raw}2E,${raw}18)`;
-    d.style.borderTop = `3px solid ${raw}`;
-    d.innerHTML =
-      `<span class="pin-tag">PINNED</span>` +
-      (meta.shared ? `<span class="share-tag">SHARED &times;2</span>` : "") +
-      winsHtml +
-      `<div class="t-name" style="color:${raw}">${spec.model.replace("remanon-","")}</div>` +
-      `<div class="t-gb">${totalGb.toFixed(0)}&thinsp;GB resident &middot; weights + master KV</div>` +
-      `<div class="t-agents" style="color:${raw}">${ags.map(a=>"&#x2B22; "+a).join(" &middot; ")}</div>`;
-    container.appendChild(d);
-    towerEl[spec.model] = {el: d, wins: d.querySelectorAll(".win")};
+function enqueueStep(s){ stepQueue.push(s); }
+function caseOf(id){ return cases[id]||(cases[id]={id, opened:nowS(), routing:[], joined:0, status:"open"}); }
+
+function playerTick(t){
+  /* finish current blocking step */
+  if(currentStep && t<stepUntil) return;
+  currentStep=null;
+  while(stepQueue.length){
+    const s=stepQueue[0];
+    /* barrier: reporter stage waits until every lane has landed */
+    if(s.type==="state" && s.state==="REPORTER" && Object.keys(lanes).length){ return; }
+    stepQueue.shift();
+    const dur=applyStep(s,t);
+    if(dur>0 && !s.parallel){ currentStep=s; stepUntil=t+dur; return; }
+  }
+}
+
+function applyStep(s,t){
+  const cs=caseOf(s.caseId);
+  switch(s.type){
+    case "case_open":{
+      cs.triggers=s.data.trigger_records||[];
+      cs.openedAt=s.data.opened_at;
+      intakeFlash={t0:t,n:s.data.record_count};
+      if(!firstCaseAt){ firstCaseAt=t; director.onFirstCase(t,cs); }
+      if(act.cur===1 || act.transitioningTo===1){ igniteNeedles(cs,t); return 3.2; }
+      return .6;
+    }
+    case "state":
+      switch(s.state){
+        case "INTAKE":
+          caseToken={pts:[cityPt(P.inlet),cityPt(P.intake)],t0:t,dur:.8,color:C.ink,label:"CASE "+s.caseId.slice(0,8),caseId:s.caseId};
+          return .8;
+        case "TRIAGE":
+          caseToken={pts:[cityPt(P.intake),cityPt(P.triage)],t0:t,dur:.9,color:C.cyan,label:"CASE "+s.caseId.slice(0,8),caseId:s.caseId};
+          readArcs.triage={t0:t+.9,minUntil:t+1.9};
+          return .9;
+        case "FAN_OUT": cs.status="fan-out"; return .25;
+        case "JOIN":    cs.status="join";    return .1;
+        case "REPORTER":
+          caseToken={pts:[cityPt(P.join),cityPt(P.reporter)],t0:t,dur:.9,color:C.crimson,label:"BUNDLE → REPORTER",caseId:s.caseId};
+          readArcs.reporter={t0:t+.9,minUntil:t+2.0};
+          cs.status="reporting";
+          return .9;
+        case "EMIT":
+          cs.status="done";
+          return .3;
+      }
+      return 0;
+    case "worker_start":{
+      const m=AGENT_META[s.agent]; if(!m) return 0;
+      lanes[s.agent]={agent:s.agent,color:m.color,t0:t,phase:"travel",released:false,minWork:1.1,caseId:s.caseId};
+      readArcs[s.agent]={t0:t+.8,minUntil:t+1.9};
+      return 0;
+    }
+    case "artifact":
+      if(s.agent==="triage"){
+        cs.routing=(s.payload&&s.payload.routing)||["correlator","hunter","topology"];
+        cs.severity=s.payload&&s.payload.severity;
+        if(readArcs.triage) readArcs.triage.done=t;
+        triageFlash={t0:t,routing:cs.routing};
+        return .8;
+      }
+      if(s.agent==="reporter"){
+        if(readArcs.reporter) readArcs.reporter.done=t;
+        const p=s.payload||{};
+        caseToken={pts:[cityPt(P.reporter),cityPt(P.verdict)],t0:t,dur:.9,color:C.amber,label:"VERDICT",caseId:s.caseId};
+        verdictFx={t0:t+.9,title:p.title||"verdict",sev:p.overall_severity||"",caseId:s.caseId};
+        if(!verdicts.some(x=>x.caseId===s.caseId))
+          verdicts.push({caseId:s.caseId,title:p.title||"verdict",sev:p.overall_severity||"",summary:p.executive_summary||"",at:t+.9});
+        if(!firstVerdictAt){ firstVerdictAt=t; director.onFirstVerdict(t); }
+        return 2.2;
+      }
+      if(lanes[s.agent]) lanes[s.agent].released=t;
+      if(readArcs[s.agent]) readArcs[s.agent].done=t;
+      return 0;
+    case "degraded":
+      if(s.agent && lanes[s.agent]){ lanes[s.agent].degraded=true; lanes[s.agent].released=t; }
+      if(readArcs[s.agent]) readArcs[s.agent].done=t;
+      return 0;
+    case "worker_end":
+      if(lanes[s.agent] && !lanes[s.agent].released) lanes[s.agent].released=t;
+      if(readArcs[s.agent] && !readArcs[s.agent].done) readArcs[s.agent].done=t;
+      return 0;
+    case "attempt_failed":
+      retryFlash={t0:t,agent:s.agent};
+      return 0;
+  }
+  return 0;
+}
+
+/* =====================================================================
+   ACT / DIRECTOR
+   ===================================================================== */
+const act={cur:1, prev:1, tStart:0, transDur:1.1, auto:true};
+const director={
+  onFirstCase(t){ if(act.auto) setTimeout(()=>{ if(act.auto) switchAct(2); }, 3300); },
+  onFirstVerdict(t){ if(act.auto) setTimeout(()=>{ if(act.auto) switchAct(3); }, 3600); },
+};
+function switchAct(n){
+  if(n===act.cur) return;
+  act.prev=act.cur; act.cur=n; act.tStart=nowS();
+  document.querySelectorAll(".act-btn").forEach(b=>b.classList.toggle("on",+b.dataset.act===n));
+}
+document.querySelectorAll(".act-btn").forEach(b=>b.onclick=()=>{
+  act.auto=false; document.getElementById("auto-btn").classList.remove("on");
+  switchAct(+b.dataset.act);
+});
+document.getElementById("auto-btn").onclick=function(){
+  act.auto=!act.auto; this.classList.toggle("on",act.auto);
+};
+function actBlend(){ /* 0..1 progress of current transition */
+  return clamp((nowS()-act.tStart)/act.transDur,0,1);
+}
+
+/* =====================================================================
+   CITY LAYOUT — normalized (u,v) space rendered into an animated rect,
+   so the whole living city can shrink into Act III's live ribbon while
+   still running.
+   ===================================================================== */
+const P={
+  inlet:  [0.030,0.230],
+  intake: [0.115,0.230],
+  triage: [0.265,0.230],
+  laneY:  {correlator:0.095, hunter:0.230, topology:0.365},
+  fanX:0.335, agentX:0.475, mergeX:0.610,
+  join:   [0.650,0.230],
+  reporter:[0.775,0.230],
+  verdict:[0.905,0.230],
+};
+let cityRect={x:0,y:0,w:0,h:0};
+function targetCityRect(){
+  const full={x:0,y:0,w:W,h:H};
+  const ribbon={x:0,y:0,w:W,h:H*0.42};
+  const a=actBlend();
+  const rectFor=n=> n===3?ribbon:full;
+  const from=rectFor(act.prev), to=rectFor(act.cur);
+  const t=easeIO(a);
+  return {x:lerp(from.x,to.x,t),y:lerp(from.y,to.y,t),w:lerp(from.w,to.w,t),h:lerp(from.h,to.h,t)};
+}
+function cityPt(uv){ return [cityRect.x+uv[0]*cityRect.w, cityRect.y+uv[1]*cityRect.h]; }
+function cityXY(u,v){ return [cityRect.x+u*cityRect.w, cityRect.y+v*cityRect.h]; }
+
+/* towers: built once from real masters_config — the amber materialization
+   plays exactly once, because materialization happened exactly once. */
+function buildTowers(cfg){
+  towersBuiltAt=nowS();
+  const totalGb=cfg.reduce((s,m)=>s+m.weights_gb+m.master_gb,0);
+  let u=0.045; const span=0.62;
+  cfg.forEach((m,i)=>{
+    const meta=MODEL_META[m.model]||{disp:m.model,color:[C.cyan,C.crimson,C.azure,C.emerald][i%4],agents:[]};
+    const gb=m.weights_gb+m.master_gb;
+    const w=span*(gb/totalGb);
+    towers.push({
+      model:m.model, disp:meta.disp, color:meta.color, agents:meta.agents, shared:!!meta.shared,
+      gb, weights:m.weights_gb, master:m.master_gb,
+      u0:u, u1:u+w-0.012,
+      matAt:towersBuiltAt+0.4+i*0.55,   // staggered one-time materialization
+      taps:new Set(),
+    });
+    u+=w;
   });
 }
-
-function setTowerLit(model, on) {
-  const t = towerEl[model]; if (!t) return;
-  t.el.classList.toggle("lit", on);
-  t.wins.forEach(w => w.classList.toggle("lit", on));
+function towerOf(agent){ const m=AGENT_META[agent]; return towers.find(t=>t.model===(m&&m.model)); }
+function towerCore(t){ /* pinned master core anchor (top-center of core block) */
+  const [x0,y0]=cityXY(t.u0,0); const [x1]=cityXY(t.u1,0);
+  const base=cityRect.y+cityRect.h*0.885;
+  const hMax=cityRect.h*0.315;
+  const coreH=hMax*(t.master/t.gb);
+  return [ (x0+x1)/2, base-coreH ];
 }
 
-/* ---- memory columns -------------------------------------------------- */
-function renderCol(colEl, capGb, hrGb, ledger) {
-  colEl.innerHTML = "";
-  const needGb = ledger.weights_gb + ledger.masters_gb + ledger.deltas_gb + hrGb;
-  const isOom  = needGb > capGb;
-  colEl.classList.toggle("oom",       isOom);
-  colEl.classList.toggle("oom-alarm", isOom);
+/* =====================================================================
+   PARTICLES — one per real record
+   ===================================================================== */
+const storm=[];               // live record particles
+let intakeFlash=null, triageFlash=null, retryFlash=null;
+let needles=[];               // ignition of the real trigger lines
+const drainRate=()=>clamp(recordQueue.length*1.4+8,8,300);  // catch-up pacing
+let drainAcc=0;
 
-  const segs = [
-    {gb: ledger.weights_gb, cls:"seg-weights",  lbl:"weights"},
-    {gb: ledger.masters_gb, cls:"seg-masters",  lbl:"masters"},
-    {gb: ledger.deltas_gb,  cls:"seg-deltas",   lbl:"deltas"},
-  ];
-  let filled = 0;
-  for (const s of segs) {
-    if (s.gb <= 0) continue;
-    const vis = Math.max(0, Math.min(s.gb, capGb - filled));
-    if (vis > 0) {
-      const n = document.createElement("div");
-      n.className = "seg " + s.cls;
-      n.style.height = (vis / capGb * 100) + "%";
-      n.textContent  = s.lbl + " " + s.gb.toFixed(0);
-      n.title = s.lbl + ": " + s.gb.toFixed(1) + " GB";
-      colEl.appendChild(n);
-    }
-    filled += vis; if (filled >= capGb) break;
+function spawnRecord(d,t){
+  const lvl=(d.level||"INFO").toUpperCase();
+  const color=LEVEL_COLOR[lvl]||LEVEL_COLOR.INFO;
+  const hot=lvl!=="INFO";
+  const inCity=act.cur!==1;
+  const p={
+    lvl,color,hot,d,born:t,
+    size:hot?(lvl==="ERROR"||lvl==="FATAL"?3.2:2.6):1.7,
+    text:(hot||Math.random()<0.14)? (d.node+"  "+(d.message||"")).slice(0,72):null,
+    mode:inCity?"flume":"storm",
+  };
+  if(p.mode==="storm"){
+    p.x=-20-Math.random()*60; p.y=H*0.06+Math.random()*H*0.66;
+    p.vx=(hot?95:70)+Math.random()*80; p.vy=(Math.random()-.5)*6;
+  }else{
+    const iy=cityPt(P.inlet)[1];
+    p.off=(Math.random()-.5)*cityRect.h*0.16;
+    p.x=cityRect.x-30-Math.random()*40; p.y=iy+p.off;
+    p.vx=120+Math.random()*60; p.vy=0;
   }
-  if (isOom) {
-    const b = document.createElement("div");
-    b.className = "oom-badge";
-    b.textContent = "OOM · needs " + needGb.toFixed(0) + " GB";
-    colEl.appendChild(b);
-    const c = document.createElement("div");
-    c.className = "seg seg-oomcap";
-    c.textContent = "+" + (needGb - capGb).toFixed(0) + " GB";
-    colEl.appendChild(c);
-  } else {
-    const freeGb = capGb - hrGb - filled;
-    if (freeGb > 0.5) {
-      const f = document.createElement("div");
-      f.className = "seg seg-free";
-      f.style.height = (freeGb / capGb * 100) + "%";
-      f.textContent = "free " + freeGb.toFixed(0);
-      colEl.appendChild(f);
-    }
-    const h = document.createElement("div");
-    h.className = "seg seg-headroom";
-    h.style.height = (hrGb / capGb * 100) + "%";
-    h.textContent = "headroom " + hrGb.toFixed(0);
-    colEl.appendChild(h);
-  }
+  if(REDUCED){p.vx*=0.35;}
+  storm.push(p);
+  if(storm.length>1500) storm.splice(0,storm.length-1500);
 }
 
-/* ---- verdicts -------------------------------------------------------- */
-const seenVerdicts = new Set();
-function renderVerdicts(vds) {
-  const box = document.getElementById("verdicts");
-  if (!vds.length) return;
-  for (const v of [...vds].reverse()) {
-    if (seenVerdicts.has(v.case_id)) continue;
-    seenVerdicts.add(v.case_id);
-    const emp = box.querySelector(".empty"); if (emp) emp.remove();
-    const sev = (v.overall_severity || "info").toLowerCase();
-    const card = document.createElement("div");
-    card.className = "verdict";
-    card.innerHTML =
-      `<div class="v-head"><span class="sev sev-${sev}">${sev.toUpperCase()}</span>` +
-      `<span class="v-title">${esc(v.title)}</span></div>` +
-      `<p>${esc(v.executive_summary)}</p>`;
-    box.insertBefore(card, box.firstChild);
-  }
-}
-function esc(s) {
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-}
-
-/* ---- agent stream ---------------------------------------------------- */
-let streamReady = false;
-const MAX_LINES = 300;
-function describe(ev) {
-  const d = ev.data || {};
-  switch (ev.kind) {
-    case "state":          return "state → " + d.state;
-    case "worker_start":   return d.agent + " start";
-    case "worker_end":     return d.agent + " end";
-    case "artifact":       return d.agent + " ✓ artifact";
-    case "degraded":       return d.agent + " DEGRADED (" + d.reason + ")";
-    case "attempt_failed": return d.agent + " attempt " + d.attempt + " failed";
-    default:               return ev.kind;
-  }
-}
-function addLine(ev) {
-  const box = document.getElementById("stream");
-  if (!streamReady) { box.innerHTML = ""; streamReady = true; }
-  const ln = document.createElement("div");
-  ln.className = "ln" + (ev.kind === "degraded" ? " dg" : "");
-  const ts    = (ev.ts || "").slice(11, 19);
-  const agent = (ev.data || {}).agent;
-  const col   = agent && AGENT_COLOR[agent] ? AGENT_COLOR[agent] : "";
-  ln.innerHTML = `<span class="ts">[${ts}]</span> <span${col ? ` style="color:${col}"` : ""}>${esc(describe(ev))}</span>`;
-  box.appendChild(ln);
-  while (box.childNodes.length > MAX_LINES) box.removeChild(box.firstChild);
-  box.scrollTop = box.scrollHeight;
-
-  /* tower pulsing */
-  if (agent) {
-    const model = AGENT_MODEL[agent];
-    if (ev.kind === "worker_start") {
-      activeAgents.add(agent);
-      if (model) setTowerLit(model, true);
-    } else if (ev.kind === "worker_end" || ev.kind === "artifact" || ev.kind === "degraded") {
-      activeAgents.delete(agent);
-      if (model) {
-        const meta = MODEL_META[model];
-        const stillOn = meta && meta.agents.some(a => a !== agent && activeAgents.has(a));
-        if (!stillOn) setTowerLit(model, false);
+function updateStorm(t,dt){
+  /* drain the real-record queue at a smoothed rate (bursts become gusts) */
+  drainAcc+=drainRate()*dt;
+  while(drainAcc>=1 && recordQueue.length){ drainAcc-=1; spawnRecord(recordQueue.shift(),t); }
+  const [ixX,ixY]=cityPt(P.intake);
+  for(let i=storm.length-1;i>=0;i--){
+    const p=storm[i];
+    if(p.mode==="storm"){
+      p.x+=p.vx*dt; p.y+=p.vy*dt;
+      if(act.cur!==1){ /* storm flows INTO the pipeline: retarget to inlet */
+        p.mode="flume"; p.off=(Math.random()-.5)*cityRect.h*0.10;
+      }
+      if(p.x>W+80){ storm.splice(i,1); continue; }
+    }else{ /* flume: home to the CURRENT inlet line (rect morphs between acts) */
+      p.x+=p.vx*dt;
+      p.y+=(cityPt(P.inlet)[1]+(p.off||0)-p.y)*Math.min(1,dt*3.2);
+      if(p.x>=ixX-6){
+        if(p.hot){ intakePulse=Math.min(1,intakePulse+0.5); }
+        else{ /* INFO is filtered by the burst rule: drops into the discard drain */
+          p.mode="drain"; p.vy=60+Math.random()*50; p.fade=1;
+        }
+        if(p.mode!=="drain"){ storm.splice(i,1); continue; }
       }
     }
+    if(p.mode==="drain"){
+      p.y+=p.vy*dt; p.x+=14*dt; p.fade-=dt*1.4;
+      if(p.fade<=0){ storm.splice(i,1); }
+    }
   }
-  /* case-open sweep */
-  if (ev.kind === "state" && (ev.data || {}).state === "INTAKE") showAlert(ev.case_id, "");
-  /* reporter artifact triggers state refresh */
-  if (ev.kind === "artifact" && agent === "reporter") refreshState();
+}
+let intakePulse=0;
+
+function drawStormParticles(alpha){
+  ctx.save(); ctx.globalAlpha=alpha;
+  ctx.font=F.mono(10.5); ctx.textAlign="left";
+  for(const p of storm){
+    const a=p.mode==="drain"?clamp(p.fade,0,1)*.8:1;
+    if(p.hot) drawGlow(ctx,p.color,p.x,p.y,p.size*5,.55*a);
+    ctx.fillStyle=hexA(p.color,p.hot?.95*a:.62*a);
+    ctx.fillRect(p.x-p.size*2.2,p.y-p.size/2,p.size*4.4,p.size); /* streak */
+    if(p.text && act.cur===1){
+      ctx.fillStyle=hexA(p.color,(p.hot?.5:.30)*a);
+      ctx.fillText(p.text,p.x+10,p.y+3.5);
+    }
+  }
+  ctx.restore();
 }
 
-/* ---- case alert ------------------------------------------------------ */
-let alertTimer = null;
-function showAlert(caseId, detail) {
-  const el = document.getElementById("case-alert");
-  document.getElementById("alert-cid").textContent = caseId ? caseId.slice(0, 12) + "…" : "";
-  document.getElementById("alert-detail").textContent = detail ? " · " + detail : "";
-  el.classList.remove("show");
-  void el.offsetWidth; // reflow to restart animation
-  el.classList.add("show");
-  if (alertTimer) clearTimeout(alertTimer);
-  alertTimer = setTimeout(() => el.classList.remove("show"), 6500);
+/* ---------- needle ignition (Act I): the real trigger lines ---------- */
+function igniteNeedles(cs,t){
+  needles=(cs.triggers||[]).map((r,i)=>({
+    text:`${(r.ts||"").slice(11,19)}  ${r.node}  ${r.level}  ${(r.message||"").slice(0,86)}`,
+    lvl:r.level, t0:t+i*0.32, i, n:cs.triggers.length,
+  }));
+}
+function drawNeedles(t){
+  if(!needles.length) return;
+  const cx=W*0.5, baseY=H*0.34;
+  ctx.save();
+  needles.forEach(nd=>{
+    const a=clamp((t-nd.t0)/0.5,0,1); if(a<=0) return;
+    const hold=clamp((t-nd.t0-1.7)/0.9,0,1);       // then converge toward the city inlet
+    const y=baseY+nd.i*34;
+    const tx=lerp(cx,W*0.06,easeIO(hold)), ty=lerp(y,H*0.5,easeIO(hold));
+    const al=(1-hold*0.7)*easeOut(a);
+    drawGlow(ctx,C.crimson,tx,ty,90*easeOut(a)*(1-hold*.8),.5*al);
+    ctx.font=F.mono(14,700); ctx.textAlign="center";
+    ctx.fillStyle=hexA("#FFD9DB",al);
+    ctx.fillText(nd.text,tx,ty);
+  });
+  const last=needles[needles.length-1];
+  if(needles.length && nowS()>last.t0+3.4) needles=[];
+  ctx.restore();
 }
 
-/* ---- state refresh --------------------------------------------------- */
-async function refreshState() {
-  try {
-    const state = await fetch("/api/state").then(r => r.json());
-    buildTowers(state.masters_config);
-    const ledger = state.metrics.ledger;
-    document.getElementById("hbm-used").textContent = ledger.used_gb.toFixed(0);
-    document.getElementById("hbm-cap").textContent  = state.capacity_gb;
-    document.getElementById("hbm-pinned").textContent = ledger.masters_gb.toFixed(0);
-    renderCol(document.getElementById("col-real"), state.capacity_gb, state.headroom_gb, ledger);
-    renderCol(document.getElementById("col-hypo"), 80,                state.headroom_gb, ledger);
-    setKpi("kpi-cases",   state.cases_processed);
-    setKpi("kpi-prefills",state.metrics.prefills_performed);
-    setKpi("kpi-avoided", state.metrics.prefills_avoided);
-    setKpi("kpi-saved",   state.metrics.gb_saved_vs_per_agent);
-    setKpi("kpi-leases",  state.metrics.active_leases);
-    renderVerdicts(state.verdicts);
-  } catch (_) { /* server briefly unavailable */ }
+/* =====================================================================
+   ACT I — THE STORM
+   ===================================================================== */
+function drawStorm(t,alpha){
+  ctx.save(); ctx.globalAlpha=alpha;
+  /* HUD */
+  ctx.font=F.chakra(12); ctx.fillStyle=C.dim; ctx.textAlign="left";
+  ctx.fillText(("LIVE FEED · LOGHUB "+(stats.dialect||"")+" REPLAY").toUpperCase(),22,30);
+  ctx.textAlign="right";
+  const lps=linesPerSec();
+  ctx.font=F.chakra(40,700); ctx.fillStyle=C.cyan;
+  ctx.fillText(lps>=1?lps.toFixed(0):lps.toFixed(1),W-22,48);
+  ctx.font=F.chakra(11); ctx.fillStyle=C.muted;
+  ctx.fillText("LINES / SEC (REAL ARRIVAL RATE)",W-22,64);
+  ctx.fillText(stats.records.toLocaleString()+" RECORDS REPLAYED",W-22,84);
+  const idle=nowS()-stats.lastRecordAt;
+  if(stats.records===0){
+    ctx.textAlign="center"; ctx.font=F.chakra(15); ctx.fillStyle=C.dim;
+    ctx.fillText("AWAITING FEED — start the demo:  python -m app.orchestrator.run_demo --dashboard",W/2,H*0.46);
+  }else if(idle>5){
+    ctx.textAlign="right"; ctx.font=F.chakra(11); ctx.fillStyle=C.dim;
+    ctx.fillText("FEED IDLE — replay paused or finished",W-22,102);
+  }
+  /* level legend (labels, not color-alone) */
+  ctx.textAlign="left"; ctx.font=F.mono(10.5);
+  let lx=22;
+  [["INFO","#54667A"],["WARN",C.amber],["ERROR",C.crimson],["FATAL",C.crit]].forEach(([k,col])=>{
+    ctx.fillStyle=col; ctx.fillRect(lx,44,8,8);
+    ctx.fillStyle=C.muted; ctx.fillText(k+" "+(stats.byLevel[k]||0),lx+13,52);
+    lx+=ctx.measureText(k+" "+(stats.byLevel[k]||0)).width+34;
+  });
+  drawStormParticles(1);
+  /* last real alert readout */
+  if(stats.lastAlert){
+    const la=stats.lastAlert;
+    ctx.font=F.mono(12); ctx.textAlign="left";
+    ctx.fillStyle=hexA(LEVEL_COLOR[(la.level||"WARN").toUpperCase()]||C.amber,.9);
+    ctx.fillText("last alert ▸ "+la.node+"  "+la.level+"  "+(la.message||"").slice(0,110),22,H-56);
+  }
+  /* narration */
+  ctx.font=F.chakra(16,600); ctx.fillStyle=C.ink; ctx.textAlign="left";
+  ctx.fillText(firstCaseAt? "There — the fateful alert lines. A case opens.":"A real production system is failing — right now.",22,H-28);
+  ctx.font=F.mono(11.5); ctx.fillStyle=C.muted;
+  ctx.fillText(firstCaseAt? Object.keys(AGENT_META).length+" minds sharing one pinned memory take it from here  →  ACT II"
+                          : "Somewhere in this flood are the few lines that explain why. Every streak above is one real replayed record.",22,H-10);
+  drawNeedles(t);
+  ctx.restore();
 }
 
-/* ---- websocket ------------------------------------------------------- */
-function connect() {
-  const scheme = location.protocol === "https:" ? "wss" : "ws";
-  const ws = new WebSocket(scheme + "://" + location.host + "/ws/events");
-  const badge = document.getElementById("conn");
-  const txt   = document.getElementById("conn-txt");
-  ws.onopen    = () => { badge.className = "live"; txt.textContent = " live"; };
-  ws.onmessage = msg => addLine(JSON.parse(msg.data));
-  ws.onclose   = () => { badge.className = "off"; txt.textContent = " reconnecting…"; setTimeout(connect, 1200); };
-  ws.onerror   = () => ws.close();
+/* =====================================================================
+   ACT II — THE LIVING CITY
+   ===================================================================== */
+function nodePos(name){
+  if(name==="triage") return cityPt(P.triage);
+  if(name==="reporter") return cityPt(P.reporter);
+  return cityXY(P.agentX,P.laneY[name]);
 }
-refreshState();
-setInterval(refreshState, 2000);
+function drawNode(x,y,label,sub,color,litAmt,shape){
+  const r=13;
+  if(litAmt>0) drawGlow(ctx,color,x,y,34,.5*litAmt);
+  ctx.strokeStyle=hexA(color,.9); ctx.lineWidth=1.6;
+  ctx.fillStyle=hexA(color,.13+.25*litAmt);
+  ctx.beginPath();
+  if(shape==="diamond"){ ctx.moveTo(x,y-r-3);ctx.lineTo(x+r+3,y);ctx.lineTo(x,y+r+3);ctx.lineTo(x-r-3,y); ctx.closePath(); }
+  else ctx.arc(x,y,r,0,7);
+  ctx.fill(); ctx.stroke();
+  ctx.font=F.chakra(11.5,700); ctx.textAlign="center";
+  ctx.fillStyle=litAmt>0?C.ink:C.muted;
+  ctx.fillText(label,x,y-r-9);
+  if(sub){ ctx.font=F.mono(9); ctx.fillStyle=C.dim; ctx.fillText(sub,x,y+r+15); }
+}
+function pipe(a,b){ ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); }
+
+function drawCity(t,alpha){
+  ctx.save(); ctx.globalAlpha=alpha;
+  const rc=cityRect;
+  const mini=rc.h<H*0.6;
+
+  /* ---- static pipeline skeleton (labeled) ---- */
+  ctx.strokeStyle="#2E3F4F"; ctx.lineWidth=1;
+  const pInlet=cityPt(P.inlet), pIntake=cityPt(P.intake), pTriage=cityPt(P.triage),
+        pJoin=cityPt(P.join), pRep=cityPt(P.reporter), pVer=cityPt(P.verdict);
+  pipe(pInlet,pIntake); pipe(pIntake,pTriage);
+  for(const ag of ["correlator","hunter","topology"]){
+    const y=cityXY(0,P.laneY[ag])[1];
+    const fan=cityXY(P.fanX,0)[0], agx=cityXY(P.agentX,0)[0], mer=cityXY(P.mergeX,0)[0];
+    ctx.beginPath();
+    ctx.moveTo(pTriage[0],pTriage[1]); ctx.lineTo(fan,y); ctx.lineTo(mer,y); ctx.lineTo(pJoin[0],pJoin[1]);
+    ctx.stroke();
+  }
+  pipe(pJoin,pRep); pipe(pRep,pVer);
+
+  /* ---- flume label + intake ---- */
+  ctx.font=F.chakra(10); ctx.fillStyle=C.dim; ctx.textAlign="left";
+  ctx.fillText("STORM INLET — live replayed records",rc.x+8,pInlet[1]-26);
+  intakePulse=Math.max(0,intakePulse-0.02);
+  drawNode(pIntake[0],pIntake[1],"INTAKE","burst detector · alerts "+stats.alerts,"#8FA6BC",intakePulse,"circle");
+  if(intakeFlash && t-intakeFlash.t0<2){
+    const a=1-(t-intakeFlash.t0)/2;
+    drawGlow(ctx,C.amber,pIntake[0],pIntake[1],60*(1+(1-a)),.6*a);
+    ctx.font=F.chakra(11,700); ctx.fillStyle=hexA(C.amber,a); ctx.textAlign="center";
+    ctx.fillText("CASE OPEN · "+intakeFlash.n+" alerts in window",pIntake[0],pIntake[1]+34);
+  }
+  ctx.font=F.mono(8.5); ctx.fillStyle=C.dim; ctx.textAlign="center";
+  ctx.fillText("INFO filtered ↓",pIntake[0]+26,pIntake[1]+46);
+
+  /* ---- triage gate + lanes + join/reporter/verdict ---- */
+  const arcT=readArcs.triage;
+  drawNode(pTriage[0],pTriage[1],"TRIAGE",mini?null:"gate · routes the case",C.cyan,arcT&&!arcDone(arcT,t)?1:0,"diamond");
+  if(triageFlash && t-triageFlash.t0<2.4 && !mini){
+    const a=1-(t-triageFlash.t0)/2.4;
+    ctx.font=F.mono(10); ctx.fillStyle=hexA(C.cyan,a); ctx.textAlign="center";
+    ctx.fillText("routing → "+triageFlash.routing.join(" · "),pTriage[0],pTriage[1]+34);
+  }
+  for(const ag of ["correlator","hunter","topology"]){
+    const [x,y]=nodePos(ag); const m=AGENT_META[ag];
+    const lane=lanes[ag]; const arc=readArcs[ag];
+    const lit=lane?1:(arc&&!arcDone(arc,t)?0.8:0);
+    drawNode(x,y,m.label,mini?null:"agent · "+MODEL_META[m.model].disp,m.color,lit,"circle");
+  }
+  drawNode(pJoin[0],pJoin[1],"JOIN",mini?null:"barrier · degrade-and-continue","#8FA6BC",0,"circle");
+  const arcR=readArcs.reporter;
+  drawNode(pRep[0],pRep[1],"REPORTER",mini?null:"verdict writer · "+MODEL_META["remanon-correlator-13b"].disp,C.crimson,arcR&&!arcDone(arcR,t)?1:0,"circle");
+  drawNode(pVer[0],pVer[1],"VERDICT",mini?null:"crystallized root cause",C.amber,verdictFx&&t-verdictFx.t0<2?1:0,"circle");
+  if(retryFlash && t-retryFlash.t0<1.2){
+    const [x,y]=nodePos(retryFlash.agent)||pTriage;
+    ctx.font=F.mono(9.5); ctx.fillStyle=hexA(C.crit,1-(t-retryFlash.t0)/1.2); ctx.textAlign="center";
+    ctx.fillText("retry",x,y-28);
+  }
+
+  /* ---- lane tokens (each = one real worker run) ---- */
+  for(const ag of Object.keys(lanes)){
+    const L=lanes[ag]; const m=AGENT_META[ag];
+    const y=cityXY(0,P.laneY[ag])[1];
+    const fan=cityXY(P.fanX,0)[0], agx=cityXY(P.agentX,0)[0], mer=cityXY(P.mergeX,0)[0];
+    let x,py;
+    if(L.phase==="travel"){
+      const k=easeIO(clamp((t-L.t0)/0.9,0,1));
+      if(k<0.45){ const kk=k/0.45; x=lerp(pTriage[0],fan,kk); py=lerp(pTriage[1],y,kk); }
+      else { x=lerp(fan,agx,(k-0.45)/0.55); py=y; }
+      if(k>=1){ L.phase="work"; L.workT0=t; }
+    }else if(L.phase==="work"){
+      x=agx; py=y;
+      const worked=t-L.workT0;
+      if(L.released && worked>=L.minWork){ L.phase="out"; L.outT0=t; }
+    }else{ /* out → join */
+      const k=easeIO(clamp((t-L.outT0)/0.9,0,1));
+      if(k<0.6){ x=lerp(agx,mer,k/0.6); py=y; }
+      else { x=lerp(mer,pJoin[0],(k-0.6)/0.4); py=lerp(y,pJoin[1],(k-0.6)/0.4); }
+      if(k>=1){
+        joinFlash={t0:t,color:L.degraded?C.dim:m.color};
+        delete lanes[ag]; continue;
+      }
+    }
+    const col=L.degraded?C.dim:m.color;
+    drawGlow(ctx,col,x,py,16,.8);
+    ctx.fillStyle=col; ctx.beginPath(); ctx.arc(x,py,4.4,0,7); ctx.fill();
+    if(!mini){
+      ctx.font=F.mono(9); ctx.fillStyle=hexA(col,.9); ctx.textAlign="center";
+      ctx.fillText(L.degraded?"INCONCLUSIVE":(L.phase==="work"?"generating…":"artifact"),x,py-12);
+    }
+  }
+  if(typeof joinFlash==="object" && joinFlash && t-joinFlash.t0<0.8){
+    drawGlow(ctx,joinFlash.color,pJoin[0],pJoin[1],40*(1+(t-joinFlash.t0)),.5*(1-(t-joinFlash.t0)/0.8));
+  }
+
+  /* ---- the case token ---- */
+  if(caseToken){
+    const k=easeIO(clamp((t-caseToken.t0)/caseToken.dur,0,1));
+    const a=caseToken.pts[0], b=caseToken.pts[1];
+    const x=lerp(a[0],b[0],k), y=lerp(a[1],b[1],k);
+    drawGlow(ctx,caseToken.color,x,y,22,.9);
+    ctx.fillStyle=caseToken.color; ctx.beginPath(); ctx.arc(x,y,5.5,0,7); ctx.fill();
+    ctx.strokeStyle=hexA(caseToken.color,.6); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(x,y,9+Math.sin(t*3)*1.5,0,7); ctx.stroke();
+    if(!mini){ ctx.font=F.mono(9.5); ctx.fillStyle=hexA(caseToken.color,.95); ctx.textAlign="center"; ctx.fillText(caseToken.label,x,y-16); }
+    if(k>=1 && t-caseToken.t0>caseToken.dur+3) caseToken=null;
+  }
+
+  /* ---- verdict crystallization (real payload) ---- */
+  if(verdictFx && t>=verdictFx.t0){
+    const age=t-verdictFx.t0;
+    const a=clamp(age/0.7,0,1);
+    const [x,y]=pVer;
+    drawGlow(ctx,C.amber,x,y,70*a,.7*(age<2?1:clamp(1-(age-2)/1.5,0,1)));
+    ctx.save(); ctx.translate(x,y); ctx.rotate(age*0.4);
+    ctx.strokeStyle=hexA(C.amber,.9); ctx.lineWidth=1.6;
+    ctx.beginPath();
+    for(let i=0;i<6;i++){ const an=i/6*Math.PI*2; const rr=12*easeOut(a);
+      i?ctx.lineTo(Math.cos(an)*rr,Math.sin(an)*rr):ctx.moveTo(Math.cos(an)*rr,Math.sin(an)*rr); }
+    ctx.closePath(); ctx.stroke(); ctx.restore();
+    if(!mini){
+      ctx.font=F.chakra(13,700); ctx.textAlign="right"; ctx.fillStyle=hexA(C.ink,a);
+      ctx.fillText((verdictFx.sev||"").toUpperCase()+" · "+verdictFx.title.slice(0,60),rc.x+rc.w-14,y+42);
+    }
+    if(age>6) verdictFx=null;
+  }
+
+  /* ---- verdict shelf (real verdicts) ---- */
+  if(!mini && verdicts.length){
+    ctx.font=F.chakra(10); ctx.fillStyle=C.dim; ctx.textAlign="right";
+    ctx.fillText("VERDICTS · "+verdicts.length,rc.x+rc.w-14,cityXY(0,0.48)[1]);
+    ctx.font=F.mono(10);
+    verdicts.slice(-3).reverse().forEach((v,i)=>{
+      ctx.fillStyle=i===0?C.amber:C.muted;
+      ctx.fillText(((v.sev||"")+"").toUpperCase()+" — "+v.title.slice(0,52),rc.x+rc.w-14,cityXY(0,0.48)[1]+16+i*15);
+    });
+  }
+
+  /* ---- READ-ARCS: live generate() reads from pinned cores ---- */
+  for(const ag of Object.keys(readArcs)){
+    const arc=readArcs[ag]; if(t<arc.t0) continue;
+    const done=arcDone(arc,t);
+    const tw=towerOf(ag); if(!tw) continue;
+    const from=towerCore(tw), to=nodePos(ag);
+    const col=AGENT_META[ag].color;
+    const fade=done?clamp(1-(t-Math.max(arc.done||0,arc.minUntil))/0.6,0,1):1;
+    if(fade<=0){ delete readArcs[ag]; continue; }
+    const mx=(from[0]+to[0])/2, my=Math.min(from[1],to[1])-cityRect.h*0.10;
+    ctx.strokeStyle=hexA(col,.34*fade); ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(from[0],from[1]); ctx.quadraticCurveTo(mx,my,to[0],to[1]); ctx.stroke();
+    /* pulses travel core → agent while the real generate() is in flight */
+    const nPulse=REDUCED?1:3;
+    for(let i=0;i<nPulse;i++){
+      const k=((t*0.55)+i/nPulse)%1;
+      const x=qbez(from[0],mx,to[0],k), y=qbez(from[1],my,to[1],k);
+      drawGlow(ctx,col,x,y,10,.85*fade);
+      ctx.fillStyle=hexA(col,.95*fade); ctx.beginPath(); ctx.arc(x,y,2.6,0,7); ctx.fill();
+    }
+    if(!mini){
+      ctx.font=F.mono(9); ctx.fillStyle=hexA(col,.8*fade); ctx.textAlign="center";
+      ctx.fillText("read · pinned master",mx,my+12);
+    }
+  }
+
+  /* ---- MODEL TOWERS (real names + sizes; amber = pinned only) ---- */
+  drawTowers(t,mini);
+  drawHbmBar(t,mini);
+
+  if(!mini){
+    ctx.font=F.mono(10); ctx.fillStyle=C.dim; ctx.textAlign="left";
+    ctx.fillText("MOTION = DATA — every particle is one replayed record or one live pipeline event",rc.x+14,rc.y+rc.h-8);
+  }
+  ctx.restore();
+}
+function arcDone(arc,t){ return arc.done && t>=arc.minUntil; }
+function qbez(a,c,b,t){ const u=1-t; return u*u*a+2*u*t*c+t*t*b; }
+
+function drawTowers(t,mini){
+  if(!towers.length){
+    ctx.font=F.chakra(11); ctx.fillStyle=C.dim; ctx.textAlign="center";
+    ctx.fillText("MEMORY PLANE — waiting for /api/state …",cityRect.x+cityRect.w*0.37,cityRect.y+cityRect.h*0.72);
+    return;
+  }
+  const base=cityRect.y+cityRect.h*0.885;
+  const hMax=cityRect.h*0.315;
+  ctx.font=F.chakra(10); ctx.fillStyle=C.dim; ctx.textAlign="left";
+  ctx.fillText("THE MEMORY — MATERIALIZED ONCE · PINNED FOREVER (width ∝ resident GB)",cityXY(0.045,0)[0],base-hMax-26);
+
+  for(const tw of towers){
+    const mat=clamp((t-tw.matAt)/0.9,0,1);          // one-time rise
+    if(mat<=0) continue;
+    const [x0]=cityXY(tw.u0,0),[x1]=cityXY(tw.u1,0);
+    const w=x1-x0, hAll=hMax*easeOut(mat);
+    const coreH=hMax*(tw.master/tw.gb);
+    const weightsH=hAll-Math.min(coreH,hAll);
+    /* weights body */
+    ctx.fillStyle=hexA(tw.color,.16); ctx.strokeStyle=hexA(tw.color,.75); ctx.lineWidth=1.3;
+    ctx.fillRect(x0,base-hAll,w,hAll); ctx.strokeRect(x0,base-hAll,w,hAll);
+    /* pinned master core — amber, the only amber thing on the board */
+    if(mat>=1){
+      const lock=clamp((t-tw.matAt-0.9)/0.6,0,1);
+      ctx.fillStyle=hexA(C.amber,.30+.25*lock);
+      ctx.strokeStyle=hexA(C.amber,.95);
+      ctx.fillRect(x0+2,base-coreH,w-4,coreH-1);
+      ctx.strokeRect(x0+2,base-coreH,w-4,coreH-1);
+      if(lock<1){ /* one-time pinning ring */
+        drawGlow(ctx,C.amber,x0+w/2,base-coreH/2,(w/2)*(1+lock),.7*(1-lock));
+      }
+      ctx.font=F.chakra(8.5,700); ctx.fillStyle=C.amber; ctx.textAlign="center";
+      ctx.fillText("PINNED",x0+w/2,base-coreH+12);
+      if(tw.shared && !mini){
+        ctx.fillStyle=C.amber; ctx.font=F.chakra(8.5,700);
+        ctx.fillText("SHARED ×2 — ONE CORE, TWO READERS",x0+w/2,base-coreH-5);
+      }
+    }
+    /* labels: real display name + real GB from the API */
+    ctx.textAlign="center";
+    ctx.font=F.chakra(mini?9.5:12.5,700); ctx.fillStyle=tw.color;
+    ctx.fillText(tw.disp,x0+w/2,base+16);
+    if(!mini){
+      ctx.font=F.mono(9); ctx.fillStyle=C.muted;
+      ctx.fillText(tw.gb.toFixed(0)+" GB resident · weights "+tw.weights.toFixed(0)+" + master "+tw.master.toFixed(0),x0+w/2,base+29);
+      ctx.fillStyle=hexA(tw.color,.85);
+      ctx.fillText("⬢ "+tw.agents.join(" · "),x0+w/2,base+42);
+    }
+  }
+  /* free + headroom block (from real ledger) */
+  if(state){
+    const led=state.metrics.ledger;
+    const [fx0]=cityXY(0.69,0),[fx1]=cityXY(0.955,0);
+    ctx.setLineDash([4,4]); ctx.strokeStyle=hexA(C.dim,.8); ctx.lineWidth=1;
+    ctx.strokeRect(fx0,base-hMax*0.6,fx1-fx0,hMax*0.6); ctx.setLineDash([]);
+    ctx.font=F.chakra(mini?9:11); ctx.fillStyle=C.dim; ctx.textAlign="center";
+    ctx.fillText("FREE "+led.available_gb.toFixed(0)+" GB · headroom "+state.headroom_gb.toFixed(0)+" GB",(fx0+fx1)/2,base-hMax*0.3);
+    if(!mini){
+      ctx.font=F.mono(9);
+      ctx.fillText("an 80 GB card cannot hold this city at all",(fx0+fx1)/2,base-hMax*0.3+16);
+    }
+  }
+}
+
+function drawHbmBar(t,mini){
+  if(!state) return;
+  const led=state.metrics.ledger;
+  const y=cityRect.y+cityRect.h*(mini?0.97:0.965), hh=mini?4:7;
+  const x0=cityXY(0.045,0)[0], x1=cityXY(0.955,0)[0];
+  const cap=state.capacity_gb;
+  const segs=[["weights",led.weights_gb,"#2A4A7A"],["masters (pinned)",led.masters_gb,C.amber],["deltas",led.deltas_gb,"#1A6A5E"]];
+  let x=x0;
+  ctx.font=F.mono(8.5); ctx.textAlign="left";
+  for(const [name,gb,col] of segs){
+    const w=(x1-x0)*(gb/cap);
+    ctx.fillStyle=col; ctx.fillRect(x,y,Math.max(w-2,0),hh);
+    if(!mini && w>60){ ctx.fillStyle=C.dim; ctx.fillText(name+" "+gb.toFixed(0),x,y-4); }
+    x+=w;
+  }
+  ctx.strokeStyle=C.hair; ctx.strokeRect(x0,y,x1-x0,hh);
+  if(!mini){ ctx.fillStyle=C.dim; ctx.textAlign="right"; ctx.fillText((state.memory_tech||"HBM")+" ledger · "+led.used_gb.toFixed(0)+" / "+cap+" GB used",x1,y-4); }
+}
+
+/* =====================================================================
+   ACT III — THE SHOWDOWN (live counters; ours real, baseline unmeasured)
+   ===================================================================== */
+const odo={};   // eased display values
+function odoVal(key,target){
+  const cur=odo[key]===undefined?target:odo[key];
+  odo[key]=Math.abs(target-cur)<0.01?target:cur+(target-cur)*0.12;
+  return odo[key];
+}
+const metricPulses=[];
+function spawnMetricPulses(kind,n){
+  const cap=Math.min(n,14);
+  for(let i=0;i<cap;i++) metricPulses.push({kind,t0:nowS()+i*0.12});
+}
+function drawShowdown(t,alpha){
+  if(alpha<=0) return;
+  ctx.save(); ctx.globalAlpha=alpha;
+  const top=cityRect.y+cityRect.h+8;
+  const hh=H-top;
+  const midX=W*0.52;
+  const m=state?state.metrics:null;
+
+  ctx.font=F.chakra(12); ctx.textAlign="left"; ctx.fillStyle=C.dim;
+  ctx.fillText("ACT III · THE SHOWDOWN — the city above is still live; these are its numbers",22,top+18);
+
+  /* ------ REMANON column (real, live) ------ */
+  ctx.strokeStyle=hexA(C.amber,.55); ctx.lineWidth=1;
+  ctx.strokeRect(20,top+30,midX-40,hh-52);
+  ctx.font=F.chakra(14,700); ctx.fillStyle=C.amber;
+  ctx.fillText("REMANON",34,top+52);
+  ctx.font=F.mono(9.5); ctx.fillStyle=C.muted;
+  ctx.fillText("live · measured in-process, this run",34,top+66);
+
+  const cells=[
+    ["EVICTIONS", m?"0":"—", C.emerald, "pinned masters are non-evictable by construction"],
+    ["PREFILLS AVOIDED", m?Math.round(odoVal("av",m.prefills_avoided)).toString():"—", C.cyan, "master digest reused, not recomputed"],
+    ["GB SAVED", m?odoVal("gb",m.gb_saved_vs_per_agent).toFixed(1):"—", C.amber, "vs one master copy per agent"],
+    ["ACTIVE LEASES", m?Math.round(odoVal("ls",m.active_leases)).toString():"—", C.azure, "agents holding pinned context right now"],
+  ];
+  const cw=(midX-60)/2;
+  cells.forEach((c,i)=>{
+    const cx=34+(i%2)*cw, cy=top+96+Math.floor(i/2)*((hh-140)/2);
+    ctx.font=F.chakra(9.5); ctx.fillStyle=C.dim; ctx.textAlign="left";
+    ctx.fillText(c[0],cx,cy);
+    ctx.font=F.chakra(Math.min(46,hh*0.16),700); ctx.fillStyle=c[2];
+    if(c[0]==="GB SAVED") drawGlow(ctx,C.amber,cx+40,cy+30,46,.25);
+    ctx.fillText(c[1],cx,cy+Math.min(44,hh*0.155));
+    ctx.font=F.mono(9); ctx.fillStyle=C.muted;
+    ctx.fillText(c[3],cx,cy+Math.min(60,hh*0.155)+16);
+  });
+  ctx.font=F.mono(10); ctx.fillStyle=C.dim;
+  ctx.fillText("cases closed "+(state?state.cases_processed:0)+" · prefills performed "+(m?m.prefills_performed:0)+" · records replayed "+stats.records.toLocaleString(),34,top+hh-34);
+
+  /* metric pulses: one mote per real unit of saving, HBM core → GB SAVED */
+  const t120=towers.find(x=>x.shared)||towers[0];
+  for(let i=metricPulses.length-1;i>=0;i--){
+    const p=metricPulses[i]; const age=t-p.t0;
+    if(age<0) continue;
+    if(age>1){ metricPulses.splice(i,1); continue; }
+    if(!t120) continue;
+    const from=towerCore(t120);
+    const to=[34+cw+40, top+96+((hh-140)/2)+20];
+    const k=easeIO(age);
+    const x=lerp(from[0],to[0],k), y=lerp(from[1],to[1],k)-Math.sin(k*Math.PI)*40;
+    drawGlow(ctx,C.amber,x,y,12,.8*(1-k*0.5));
+    ctx.fillStyle=C.amber; ctx.beginPath(); ctx.arc(x,y,2.5,0,7); ctx.fill();
+  }
+
+  /* ------ BASELINE column (never fabricated) ------ */
+  ctx.setLineDash([5,5]); ctx.strokeStyle=hexA(C.dim,.7);
+  ctx.strokeRect(midX+20,top+30,W-midX-40,hh-52); ctx.setLineDash([]);
+  ctx.font=F.chakra(14,700); ctx.fillStyle=C.muted; ctx.textAlign="left";
+  ctx.fillText("BASELINE",midX+34,top+52);
+  ctx.font=F.mono(9.5); ctx.fillStyle=C.dim;
+  ctx.fillText("vanilla vLLM · opportunistic prefix cache",midX+34,top+66);
+  ["EVICTIONS","PREFILLS AVOIDED","GB SAVED","ACTIVE LEASES"].forEach((k,i)=>{
+    const cx=midX+34+(i%2)*cw, cy=top+96+Math.floor(i/2)*((hh-140)/2);
+    ctx.font=F.chakra(9.5); ctx.fillStyle=C.dim; ctx.fillText(k,cx,cy);
+    ctx.font=F.chakra(Math.min(46,hh*0.16),700); ctx.fillStyle=hexA(C.dim,.9);
+    ctx.fillText("—",cx,cy+Math.min(44,hh*0.155));
+  });
+  ctx.font=F.chakra(11,600); ctx.fillStyle=C.muted;
+  ctx.fillText("baseline: measured on hardware day (D-03)",midX+34,top+hh-48);
+  ctx.font=F.mono(9.5); ctx.fillStyle=C.dim;
+  ctx.fillText("this column stays empty until it is measured — no fabricated numbers",midX+34,top+hh-34);
+
+  ctx.restore();
+}
+let joinFlash=null;
+
+/* =====================================================================
+   MAIN LOOP
+   ===================================================================== */
+let lastT=nowS();
+function frame(){
+  const t=nowS(); const dt=Math.min(0.05,t-lastT); lastT=t;
+  cityRect=targetCityRect();
+  playerTick(t);
+  updateStorm(t,dt);
+
+  ctx.clearRect(0,0,W,H);
+  /* soft vignette backdrop */
+  ctx.fillStyle=C.void; ctx.fillRect(0,0,W,H);
+
+  const blend=actBlend();
+  const aCur=blend, aPrev=1-blend;
+  const acts={};
+  acts[act.prev]=(acts[act.prev]||0)+aPrev;
+  acts[act.cur]=(acts[act.cur]||0)+aCur;
+
+  /* storm draws under everything when city is up (its particles feed the flume) */
+  if(acts[1]) drawStorm(t,acts[1]);
+  if(acts[2]||acts[3]){
+    if(!acts[1]) drawStormParticles(0.9);      // continuing real flow into the inlet
+    drawCity(t,(acts[2]||0)+(acts[3]||0));
+  }
+  if(acts[3]) drawShowdown(t,acts[3]);
+
+  requestAnimationFrame(frame);
+}
+
+/* boot (URL hash #act1/#act2/#act3 pins an act — handy for rehearsal) */
+const hashAct=/^#act([123])$/.exec(location.hash);
+if(hashAct){ act.auto=false; document.getElementById("auto-btn").classList.remove("on");
+  act.prev=+hashAct[1]; act.cur=+hashAct[1]; act.tStart=0;
+  document.querySelectorAll(".act-btn").forEach(b=>b.classList.toggle("on",+b.dataset.act===act.cur)); }
+resize();
 connect();
+poll(); setInterval(poll,1500);
+requestAnimationFrame(frame);
 </script>
 </body>
 </html>
