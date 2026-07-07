@@ -21,14 +21,13 @@ jobs:
       - name: Install uv
         run: pip install uv
 
-      - name: Install dependencies
-        run: uv pip install --system -e ".[dev]"
-
+      # Run ruff through the project's resolved environment so CI, the local
+      # venv, and pre-commit all use the single version pinned in pyproject.
       - name: Run ruff check
-        run: ruff check .
+        run: uv run --extra dev ruff check .
 
       - name: Run ruff format check
-        run: ruff format --check .
+        run: uv run --extra dev ruff format --check .
 
   test:
     name: Tests (pytest)

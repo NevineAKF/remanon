@@ -36,6 +36,8 @@ class DashboardSources:
     # comes from the MemoryModel so the two can never disagree.
     hardware_name: str = "AMD Instinct™ MI300X"
     memory_tech: str = "HBM3"
+    # "mock" until D-03 hardware validation; flips to "live" on real silicon.
+    engine_mode: str = "mock"
 
 
 def create_dashboard_app(sources: DashboardSources, last_events: int = 200) -> FastAPI:
@@ -72,6 +74,7 @@ def create_dashboard_app(sources: DashboardSources, last_events: int = 200) -> F
                 f"{sources.hardware_name} · {mm.total_capacity_gb:g} GB {sources.memory_tech}"
             ),
             "memory_tech": sources.memory_tech,
+            "engine_mode": sources.engine_mode,
             "masters_config": [
                 {"model": spec.name, "weights_gb": spec.weights_gb, "master_gb": spec.master_gb}
                 for spec in mm.models.values()

@@ -15,17 +15,20 @@
   --emerald:#2FBF8F; --amber:#F5A623; --crit:#FF4B57;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden}
+html{scroll-behavior:smooth}
 body{
   background:var(--void);
   color:var(--ink);
   font-family:"JetBrains Mono",ui-monospace,monospace;
   -webkit-font-smoothing:antialiased;
-  display:flex;flex-direction:column;
+  overflow-x:hidden;
+  padding-bottom:30px;
 }
 header{
+  position:sticky;top:0;z-index:20;
   display:flex;justify-content:space-between;align-items:flex-end;gap:18px;
-  padding:12px 22px 10px;border-bottom:1px solid var(--hair);flex-shrink:0;
+  padding:12px 22px 10px;border-bottom:1px solid var(--hair);
+  background:rgba(7,9,13,.94);backdrop-filter:blur(8px);
 }
 .eyebrow{font-size:10px;letter-spacing:.34em;color:var(--amber);text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .blip{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px var(--amber);animation:blip 1.7s infinite;flex-shrink:0}
@@ -34,31 +37,96 @@ h1{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:clamp(17px,2.
 h1 .r{color:var(--amber)}
 .tagline{color:var(--muted);font-size:11px;margin-top:5px;line-height:1.5}
 .tagline b{color:var(--ink)}
-.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.hdr-right{display:flex;align-items:flex-end;gap:24px;flex-shrink:0}
 .hbm-mini{font-family:"Chakra Petch",sans-serif;text-align:right;font-size:10.5px;color:var(--dim);line-height:1.7}
 .hbm-mini strong{color:var(--cyan);font-size:20px;font-weight:700}
 .hbm-mini .a{color:var(--amber)}
 .hbm-mini .hw{letter-spacing:.14em;text-transform:uppercase;font-size:9.5px}
+.hdr-ctrl{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+#run-btn{
+  font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:12px;letter-spacing:.14em;
+  padding:10px 20px;border:1px solid var(--amber);color:var(--amber);
+  background:rgba(245,166,35,.07);border-radius:3px;cursor:pointer;transition:.2s;
+  text-transform:uppercase;white-space:nowrap;
+}
+#run-btn:hover{background:rgba(245,166,35,.16)}
+#run-btn.on{background:var(--amber);color:#0A0C10;box-shadow:0 0 22px rgba(245,166,35,.35)}
 #conn{font-size:10px;letter-spacing:.1em;display:flex;align-items:center;gap:6px;color:var(--muted)}
 #conn .dot{width:6px;height:6px;border-radius:50%;background:var(--dim)}
 #conn.live .dot{background:var(--emerald);box-shadow:0 0 8px var(--emerald);animation:blip 2s infinite}
 #conn.off .dot{background:var(--crit)}
-nav{display:flex;gap:8px;align-items:center;padding:8px 22px;flex-shrink:0;border-bottom:1px solid var(--hair)}
-.act-btn{
-  font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:11.5px;letter-spacing:.08em;
-  border:1px solid var(--hair);color:var(--muted);background:transparent;padding:8px 16px;border-radius:3px;
-  cursor:pointer;transition:.18s;display:flex;gap:8px;align-items:center;text-transform:uppercase;
+
+/* ---- scroll-narrative sections ---- */
+section.stage-sec{position:relative;height:calc(100vh - 122px);min-height:480px;border-bottom:1px solid var(--hair)}
+canvas.stage{position:absolute;inset:0;width:100%;height:100%;display:block;transition:opacity .9s}
+.veil{
+  position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;
+  font-family:"Chakra Petch",sans-serif;font-size:13px;letter-spacing:.32em;text-transform:uppercase;
+  color:var(--dim);opacity:0;pointer-events:none;transition:opacity .9s;
 }
-.act-btn small{color:var(--dim);font-weight:400;letter-spacing:0;text-transform:none}
-.act-btn.on{border-color:var(--amber);color:var(--ink);box-shadow:0 0 16px rgba(245,166,35,.18)}
-.act-btn.on small{color:var(--amber)}
-#auto-btn{margin-left:auto;font-family:"Chakra Petch",sans-serif;font-size:10.5px;letter-spacing:.14em;
-  border:1px solid var(--hair);background:transparent;color:var(--dim);padding:8px 14px;border-radius:3px;cursor:pointer;transition:.18s}
-#auto-btn.on{border-color:var(--emerald);color:var(--emerald);box-shadow:0 0 14px rgba(47,191,143,.15)}
-main{flex:1;min-height:0;position:relative}
-#stage{position:absolute;inset:0;width:100%;height:100%;display:block}
+.pending .veil{opacity:1}
+.pending canvas.stage{opacity:.13}
+.pending .sec-body{opacity:.13;filter:saturate(.3)}
+.sec-body{transition:opacity .9s,filter .9s}
+
+/* ---- live results ledger ---- */
+#sec-results{position:relative;min-height:calc(100vh - 122px);padding:24px 22px 70px}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:14px}
+.sec-head h2{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:15px;letter-spacing:.24em;color:var(--ink)}
+.sec-head .sub{font-size:10.5px;color:var(--muted)}
+#run-facts{font-size:10px;color:var(--dim);letter-spacing:.05em;white-space:nowrap}
+#synth{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0 24px}
+.tile{border:1px solid var(--hair);border-radius:3px;padding:14px 18px 12px;background:var(--panel)}
+.tile .k{font-family:"Chakra Petch",sans-serif;font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase}
+.tile .v{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:44px;line-height:1.2;color:var(--ink)}
+.tile .v.c{color:var(--cyan)} .tile .v.a{color:var(--amber)} .tile .v.e{color:var(--emerald)}
+.tile .s{font-size:9.5px;color:var(--muted);line-height:1.45}
+.tile.hot .v{animation:vpulse .9s ease}
+@keyframes vpulse{0%{text-shadow:0 0 26px currentColor}100%{text-shadow:0 0 0 transparent}}
+#ledger{width:100%;border-collapse:collapse;table-layout:fixed}
+#ledger th{
+  font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:9.5px;letter-spacing:.18em;
+  color:var(--dim);text-transform:uppercase;text-align:left;
+  padding:8px 10px;border-bottom:1px solid var(--hair);
+}
+#ledger td{
+  vertical-align:top;padding:15px 10px;border-bottom:1px solid rgba(34,48,61,.55);
+  font-size:11.5px;line-height:1.55;color:var(--muted);overflow:hidden;
+}
+#ledger tr.row{animation:rowIn .7s ease both}
+@keyframes rowIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+td .p{color:var(--ink);font-size:12.5px;line-height:1.45}
+td .m{color:var(--dim);font-size:10.5px;margin-top:3px}
+.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.cid{color:var(--ink);font-weight:700;font-size:12.5px;letter-spacing:.04em}
+.ct{color:var(--dim);font-size:10px;margin-top:2px}
+.chip{
+  display:inline-block;font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:10.5px;
+  letter-spacing:.12em;padding:3px 9px;border:1px solid currentColor;border-radius:2px;text-transform:uppercase;
+}
+.sev-critical{color:var(--crit)} .sev-high{color:var(--crimson)} .sev-medium{color:var(--amber)}
+.sev-low{color:var(--azure)} .sev-info{color:var(--dim)}
+.dots{display:flex;gap:5px;padding-top:5px}
+.dot2{width:9px;height:9px;border-radius:50%;border:1px solid var(--hair)}
+.dot2.on{border-color:transparent;background:currentColor;box-shadow:0 0 8px currentColor}
+.dot2.dg{border-color:var(--crimson);background:transparent;box-shadow:none;opacity:.65}
+.mem .d{color:var(--muted);font-size:11px}
+.mem .r{color:var(--amber);font-size:11px}
+#ledger-empty{padding:26px 10px;color:var(--dim);font-size:11px;letter-spacing:.06em}
+
+/* ---- data honesty badge ---- */
+#honesty{
+  position:fixed;bottom:0;left:0;right:0;z-index:20;
+  font-size:10px;letter-spacing:.07em;color:var(--dim);
+  padding:6px 22px;border-top:1px solid var(--hair);
+  background:rgba(7,9,13,.94);backdrop-filter:blur(8px);
+}
+#honesty b{color:var(--muted);font-weight:400}
+
 @media(prefers-reduced-motion:reduce){
   .blip,#conn .dot{animation:none!important}
+  #ledger tr.row,.tile.hot .v{animation:none!important}
+  html{scroll-behavior:auto}
 }
 </style>
 </head>
@@ -72,26 +140,64 @@ main{flex:1;min-height:0;position:relative}
   </div>
   <div class="hdr-right">
     <div class="hbm-mini"><span id="hbm-hw" class="hw">&mdash;</span><br><strong id="hbm-used">&mdash;</strong> / <span id="hbm-cap">&mdash;</span>&thinsp;GB &nbsp;<span class="a">pinned <span id="hbm-pinned">&mdash;</span>&thinsp;GB</span></div>
-    <div id="conn" class="off"><span class="dot"></span><span id="conn-txt">connecting&hellip;</span></div>
+    <div class="hdr-ctrl">
+      <button id="run-btn">&#9654; RUN LIVE DEMO</button>
+      <div id="conn" class="off"><span class="dot"></span><span id="conn-txt">connecting&hellip;</span></div>
+    </div>
   </div>
 </header>
 
-<nav>
-  <button class="act-btn on" data-act="1">ACT I <small>&middot; the storm</small></button>
-  <button class="act-btn" data-act="2">ACT II <small>&middot; the living city</small></button>
-  <button class="act-btn" data-act="3">ACT III <small>&middot; the showdown</small></button>
-  <button id="auto-btn" class="on">&#9679; AUTO-DIRECTOR</button>
-</nav>
+<section class="stage-sec" id="sec-storm">
+  <canvas id="cv-storm" class="stage"></canvas>
+</section>
 
-<main><canvas id="stage"></canvas></main>
+<section class="stage-sec pending" id="sec-city">
+  <canvas id="cv-city" class="stage"></canvas>
+  <div class="veil">awaiting first case&hellip;</div>
+</section>
+
+<section id="sec-results" class="pending">
+  <div class="sec-body">
+    <div class="sec-head">
+      <div>
+        <h2>LIVE RESULTS LEDGER</h2>
+        <div class="sub">the agents' final product — one row per case, every value from the live run</div>
+      </div>
+      <span id="run-facts">&mdash;</span>
+    </div>
+    <div id="synth">
+      <div class="tile"><div class="k">Cases closed</div><div class="v" id="st-cases">&mdash;</div><div class="s">verdicts delivered this run</div></div>
+      <div class="tile"><div class="k">Prefills avoided</div><div class="v c" id="st-avoid">&mdash;</div><div class="s">master digest reused, not recomputed</div></div>
+      <div class="tile"><div class="k">GB saved</div><div class="v a" id="st-saved">&mdash;</div><div class="s">vs one master copy per agent</div></div>
+      <div class="tile"><div class="k">Evictions</div><div class="v e" id="st-evict">&mdash;</div><div class="s">pinned masters are non-evictable by construction</div></div>
+    </div>
+    <table id="ledger">
+      <colgroup>
+        <col style="width:8%"><col style="width:7%"><col style="width:12%"><col style="width:19%">
+        <col style="width:16%"><col style="width:10%"><col style="width:15%"><col style="width:6%"><col style="width:7%">
+      </colgroup>
+      <thead><tr>
+        <th>Case</th><th>Severity</th><th>Problem</th><th>Root cause</th><th>Evidence</th>
+        <th>Blast radius</th><th>Recommendation</th><th>Agents</th><th>Memory cost</th>
+      </tr></thead>
+      <tbody id="ledger-body"></tbody>
+    </table>
+    <div id="ledger-empty">verdicts appear here as cases close</div>
+  </div>
+  <div class="veil">awaiting first verdict&hellip;</div>
+</section>
+
+<footer id="honesty">replay: <b>real HDFS production logs (Loghub)</b> &middot; <span id="engine-badge">inference: &mdash;</span></footer>
 
 <script>
 "use strict";
 /* =====================================================================
-   REMANON · LIVE OPERATIONS THEATER — flow-first canvas build.
-   GOVERNING RULE — MOTION = DATA: every moving particle on this canvas
+   REMANON — one continuous scroll-narrative, flow-first canvas build.
+   GOVERNING RULE — MOTION = DATA: every moving particle on these canvases
    is one real record or pipeline event received over /ws/events, or one
    real unit of a metric delta from /api/state. Nothing moves for show.
+   The story reveals itself: storm → (first case) city → (first verdict)
+   results ledger. Completed sections stay live when scrolling back.
    ===================================================================== */
 
 /* ---------- palette + identity ---------- */
@@ -116,6 +222,7 @@ const AGENT_META = {
   topology:  {model:"remanon-topology-7b",    color:C.emerald, label:"TOPOLOGY"},
   reporter:  {model:"remanon-correlator-13b", color:C.crimson, label:"REPORTER"},
 };
+const AGENT_ORDER = Object.keys(AGENT_META);
 const LEVEL_COLOR = {INFO:"#54667A", WARN:C.amber, ERROR:C.crimson, FATAL:C.crit};
 const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -128,6 +235,12 @@ const nowS=()=>performance.now()/1000;
 function hexA(hex,a){ /* hex → rgba string */
   const n=parseInt(hex.slice(1),16);
   return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;
+}
+function el(tag,cls,text){
+  const e=document.createElement(tag);
+  if(cls) e.className=cls;
+  if(text!=null) e.textContent=text;
+  return e;
 }
 /* pre-rendered glow sprites (shadowBlur is too slow at 60fps) */
 const glowCache={};
@@ -145,23 +258,58 @@ function drawGlow(ctx,color,x,y,r,alpha){
 }
 
 /* =====================================================================
-   CANVAS
+   CANVASES — one per narrative section; drawn only while on screen
    ===================================================================== */
-const cv=document.getElementById("stage");
-const ctx=cv.getContext("2d");
-let W=0,H=0;
-function resize(){
-  const r=cv.getBoundingClientRect(), dpr=devicePixelRatio||1;
-  W=Math.max(320,r.width); H=Math.max(240,r.height);
-  cv.width=W*dpr; cv.height=H*dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
+function mkView(id){ const cv=document.getElementById(id); return {cv, ctx:cv.getContext("2d"), w:0, h:0, visible:true}; }
+const views={ storm:mkView("cv-storm"), city:mkView("cv-city") };
+let ctx=null, W=0, H=0;                    // bound to the view being drawn
+function bind(v){ ctx=v.ctx; W=v.w; H=v.h; }
+function resizeAll(){
+  const dpr=devicePixelRatio||1;
+  for(const v of Object.values(views)){
+    const r=v.cv.getBoundingClientRect();
+    v.w=Math.max(320,r.width); v.h=Math.max(240,r.height);
+    v.cv.width=v.w*dpr; v.cv.height=v.h*dpr;
+    v.ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
 }
-addEventListener("resize",resize);
+addEventListener("resize",resizeAll);
+const io=new IntersectionObserver(entries=>{
+  for(const e of entries){
+    if(e.target.id==="sec-storm") views.storm.visible=e.isIntersecting;
+    if(e.target.id==="sec-city")  views.city.visible=e.isIntersecting;
+  }
+},{threshold:0.02});
+io.observe(document.getElementById("sec-storm"));
+io.observe(document.getElementById("sec-city"));
 
 /* fonts */
 const F={
   chakra:(px,w)=> `${w||600} ${px}px "Chakra Petch",sans-serif`,
   mono:(px,w)=> `${w||400} ${px}px "JetBrains Mono",monospace`,
+};
+
+/* =====================================================================
+   THE REVEAL — sections activate on real milestones, never on a timer
+   ===================================================================== */
+const reveal={city:false, results:false, follow:false};
+function activate(name, scroll=true){
+  if(reveal[name]) return;
+  reveal[name]=true;
+  const sec=document.getElementById(name==="city"?"sec-city":"sec-results");
+  sec.classList.remove("pending");
+  if(scroll && reveal.follow) sec.scrollIntoView({behavior:REDUCED?"auto":"smooth", block:"start"});
+}
+const director={
+  onFirstCase(){ setTimeout(()=>activate("city"), 2700); },      // let the needles land first
+  onFirstVerdict(){ setTimeout(()=>activate("results"), 1500); },// let the verdict crystallize
+};
+const runBtn=document.getElementById("run-btn");
+runBtn.onclick=()=>{
+  reveal.follow=!reveal.follow;
+  runBtn.classList.toggle("on",reveal.follow);
+  runBtn.innerHTML=reveal.follow?"&#9679; LIVE — FOLLOWING THE CASE":"&#9654; RUN LIVE DEMO";
+  if(reveal.follow) document.getElementById("sec-storm").scrollIntoView({behavior:REDUCED?"auto":"smooth"});
 };
 
 /* =====================================================================
@@ -175,9 +323,8 @@ const stats={
   casesOpened:0, eventsSeen:0,
 };
 let state=null;                 // last /api/state snapshot
-let prevMetrics=null;           // for real metric deltas → counter pulses
+let prevMetrics=null;           // for real metric deltas → tile pulses
 const recordQueue=[];           // records waiting to become particles (real, FIFO)
-const verdicts=[];              // {title, sev, summary, caseId, at}
 const towers=[];                // built once from masters_config
 let towersBuiltAt=0;
 
@@ -212,6 +359,7 @@ function onEvent(ev){
     }
     case "case_open":
       stats.casesOpened++;
+      liveCases.add(ev.case_id);   // this session watches it live: the step player owns its reveal
       enqueueStep({type:"case_open", caseId:ev.case_id, data:d});
       break;
     case "state":
@@ -246,25 +394,52 @@ async function poll(){
     const s=await fetch("/api/state").then(r=>r.json());
     state=s;
     if(!towers.length && s.masters_config && s.masters_config.length) buildTowers(s.masters_config);
-    const led=s.metrics.ledger;
+    const led=s.metrics.ledger, m=s.metrics;
     document.getElementById("hbm-hw").textContent=s.hardware||"GPU POOL";
     document.getElementById("hbm-used").textContent=led.used_gb.toFixed(0);
     document.getElementById("hbm-cap").textContent=s.capacity_gb;
     document.getElementById("hbm-pinned").textContent=led.masters_gb.toFixed(0);
-    /* real metric deltas → unit pulses in Act III */
-    if(prevMetrics){
-      const dAvoid=s.metrics.prefills_avoided-prevMetrics.prefills_avoided;
-      const dSaved=s.metrics.gb_saved_vs_per_agent-prevMetrics.gb_saved_vs_per_agent;
-      if(dAvoid>0) spawnMetricPulses("avoided",dAvoid);
-      if(dSaved>0) spawnMetricPulses("saved",Math.max(1,Math.round(dSaved/2)));
-    }
-    prevMetrics=s.metrics;
-    /* verdicts (authoritative list; ws artifact steps animate them first) */
+    /* data honesty badge — flips by itself on hardware day */
+    document.getElementById("engine-badge").textContent =
+      s.engine_mode==="live" ? "inference: live on "+(s.hardware||"target hardware")
+                             : "inference: mock engine — hardware validation pending (D-03)";
+    /* synthesis strip (real, live) */
+    setStat("st-cases", String(s.cases_processed));
+    setStat("st-avoid", String(m.prefills_avoided));
+    setStat("st-saved", (+m.gb_saved_vs_per_agent).toFixed(1));
+    setStat("st-evict", "0");
+    document.getElementById("run-facts").textContent =
+      stats.records.toLocaleString()+" records replayed · "+m.prefills_performed+
+      " prefills performed · "+m.active_leases+" active leases";
+    prevMetrics=m;
+    /* authoritative verdict list — covers cases closed BEFORE this page
+       loaded. Cases watched live stay with the step player, so their row
+       lands when the verdict animation does. Pre-session rows are hydrated
+       from the real events still in the /api/state buffer; anything outside
+       that buffer shows "—", never an invented value. */
+    let preSession=false;
     for(const v of s.verdicts||[]){
-      if(!verdicts.some(x=>x.caseId===v.case_id))
-        verdicts.push({caseId:v.case_id,title:v.title,sev:v.overall_severity,summary:v.executive_summary,at:nowS()});
+      if(liveCases.has(v.case_id)) continue;
+      preSession=true;
+      if(ledgerRows.has(v.case_id)) continue;
+      const cs=hydrateCase(v.case_id, s.events||[]);
+      const p=reporterPayloadFromEvents(s.events||[], v.case_id) ||
+              {title:v.title, overall_severity:v.overall_severity, executive_summary:v.executive_summary};
+      addLedgerRow(v.case_id, p, cs, v.ts);
     }
+    /* milestones that predate this session: light sections without scrolling */
+    if(stats.casesOpened===0 &&
+       (s.cases_processed>0 || (s.events||[]).some(e=>e.kind==="case_open"))) activate("city", false);
+    if(preSession) activate("results", false);
+    peakDeltas=Math.max(peakDeltas, led.deltas_gb);
   }catch(_){/* server briefly unavailable */}
+}
+function setStat(id,val){
+  const e=document.getElementById(id);
+  if(e.textContent===val) return;
+  e.textContent=val;
+  const tile=e.closest(".tile");
+  tile.classList.remove("hot"); void tile.offsetWidth; tile.classList.add("hot");
 }
 
 /* =====================================================================
@@ -277,14 +452,17 @@ async function poll(){
 const stepQueue=[];
 let currentStep=null, stepUntil=0;
 const lanes={};            // agent → live lane animation object
-const cases={};            // caseId → presentation state
-let caseToken=null;        // the travelling case packet {pts,t0,dur,color,label,at,hold}
+const cases={};            // caseId → presentation + ledger data
+let caseToken=null;        // the travelling case packet {pts,t0,dur,color,label}
 let readArcs={};           // agent → {t0, done, minUntil}
 let verdictFx=null;        // crystallization animation
 let firstCaseAt=0, firstVerdictAt=0;
 
 function enqueueStep(s){ stepQueue.push(s); }
-function caseOf(id){ return cases[id]||(cases[id]={id, opened:nowS(), routing:[], joined:0, status:"open"}); }
+function caseOf(id){
+  return cases[id]||(cases[id]={id, opened:nowS(), routing:[], status:"open",
+                                contrib:new Set(), deg:new Set()});
+}
 
 function playerTick(t){
   /* finish current blocking step */
@@ -305,11 +483,12 @@ function applyStep(s,t){
   switch(s.type){
     case "case_open":{
       cs.triggers=s.data.trigger_records||[];
+      cs.recordCount=s.data.record_count;
       cs.openedAt=s.data.opened_at;
       intakeFlash={t0:t,n:s.data.record_count};
-      if(!firstCaseAt){ firstCaseAt=t; director.onFirstCase(t,cs); }
-      if(act.cur===1 || act.transitioningTo===1){ igniteNeedles(cs,t); return 3.2; }
-      return .6;
+      igniteNeedles(cs,t);
+      if(!firstCaseAt){ firstCaseAt=t; director.onFirstCase(); return 3.2; }
+      return reveal.city?0.6:3.2;
     }
     case "state":
       switch(s.state){
@@ -339,9 +518,12 @@ function applyStep(s,t){
       return 0;
     }
     case "artifact":
+      cs.contrib.add(s.agent);
       if(s.agent==="triage"){
-        cs.routing=(s.payload&&s.payload.routing)||["correlator","hunter","topology"];
-        cs.severity=s.payload&&s.payload.severity;
+        const p=s.payload||{};
+        cs.routing=p.routing||["correlator","hunter","topology"];
+        cs.severity=p.severity;
+        cs.category=p.category;
         if(readArcs.triage) readArcs.triage.done=t;
         triageFlash={t0:t,routing:cs.routing};
         return .8;
@@ -351,15 +533,19 @@ function applyStep(s,t){
         const p=s.payload||{};
         caseToken={pts:[cityPt(P.reporter),cityPt(P.verdict)],t0:t,dur:.9,color:C.amber,label:"VERDICT",caseId:s.caseId};
         verdictFx={t0:t+.9,title:p.title||"verdict",sev:p.overall_severity||"",caseId:s.caseId};
-        if(!verdicts.some(x=>x.caseId===s.caseId))
-          verdicts.push({caseId:s.caseId,title:p.title||"verdict",sev:p.overall_severity||"",summary:p.executive_summary||"",at:t+.9});
-        if(!firstVerdictAt){ firstVerdictAt=t; director.onFirstVerdict(t); }
+        addLedgerRow(s.caseId,p,cs,null);
+        if(!firstVerdictAt){ firstVerdictAt=t; director.onFirstVerdict(); }
         return 2.2;
       }
+      /* worker artifacts — capture the real payload for the ledger row */
+      if(s.agent==="hunter")     cs.hunter=(s.payload&&s.payload.findings&&s.payload.findings[0])||null;
+      if(s.agent==="correlator") cs.corr=(s.payload&&s.payload.clusters&&s.payload.clusters[0])||null;
+      if(s.agent==="topology")   cs.topo=s.payload||null;
       if(lanes[s.agent]) lanes[s.agent].released=t;
       if(readArcs[s.agent]) readArcs[s.agent].done=t;
       return 0;
     case "degraded":
+      if(s.agent) cs.deg.add(s.agent);
       if(s.agent && lanes[s.agent]){ lanes[s.agent].degraded=true; lanes[s.agent].released=t; }
       if(readArcs[s.agent]) readArcs[s.agent].done=t;
       return 0;
@@ -375,33 +561,135 @@ function applyStep(s,t){
 }
 
 /* =====================================================================
-   ACT / DIRECTOR
+   LIVE RESULTS LEDGER — one row per case, straight from the payloads
    ===================================================================== */
-const act={cur:1, prev:1, tStart:0, transDur:1.1, auto:true};
-const director={
-  onFirstCase(t){ if(act.auto) setTimeout(()=>{ if(act.auto) switchAct(2); }, 3300); },
-  onFirstVerdict(t){ if(act.auto) setTimeout(()=>{ if(act.auto) switchAct(3); }, 3600); },
-};
-function switchAct(n){
-  if(n===act.cur) return;
-  act.prev=act.cur; act.cur=n; act.tStart=nowS();
-  document.querySelectorAll(".act-btn").forEach(b=>b.classList.toggle("on",+b.dataset.act===n));
+const ledgerRows=new Map();
+const liveCases=new Set();      // case_open seen over ws in this session
+let peakDeltas=0;               // highest working-delta GB sampled since last row
+/* rebuild a case's ledger data from the event buffer (page opened mid-run) */
+function hydrateCase(caseId,events){
+  const cs=caseOf(caseId);
+  for(const e of events){
+    if(e.case_id!==caseId) continue;
+    const d=e.data||{};
+    if(e.kind==="case_open"){ cs.triggers=d.trigger_records||[]; cs.recordCount=d.record_count; cs.openedAt=d.opened_at; }
+    if(e.kind==="artifact"){
+      let p=null; try{ p=d.artifact_raw.payload; }catch(_){}
+      cs.contrib.add(d.agent);
+      if(d.agent==="triage" && p){ cs.category=p.category; cs.routing=p.routing||cs.routing; }
+      if(d.agent==="hunter" && p)     cs.hunter=(p.findings&&p.findings[0])||null;
+      if(d.agent==="correlator" && p) cs.corr=(p.clusters&&p.clusters[0])||null;
+      if(d.agent==="topology" && p)   cs.topo=p;
+    }
+    if(e.kind==="degraded" && d.agent) cs.deg.add(d.agent);
+  }
+  return cs;
 }
-document.querySelectorAll(".act-btn").forEach(b=>b.onclick=()=>{
-  act.auto=false; document.getElementById("auto-btn").classList.remove("on");
-  switchAct(+b.dataset.act);
-});
-document.getElementById("auto-btn").onclick=function(){
-  act.auto=!act.auto; this.classList.toggle("on",act.auto);
-};
-function actBlend(){ /* 0..1 progress of current transition */
-  return clamp((nowS()-act.tStart)/act.transDur,0,1);
+function reporterPayloadFromEvents(events,caseId){
+  for(const e of events){
+    if(e.kind==="artifact" && e.case_id===caseId && (e.data||{}).agent==="reporter"){
+      try{ return e.data.artifact_raw.payload; }catch(_){}
+    }
+  }
+  return null;
+}
+function rootCauseOf(p){
+  const s=p.executive_summary||"";
+  const m=/root cause:?\s*(.+)/is.exec(s);
+  if(m) return m[1];
+  const sec=(p.sections||[]).find(x=>/finding|cause/i.test(x.heading||""));
+  return sec?sec.body:(s||"—");
+}
+function recommendationOf(p){
+  const sec=(p.sections||[]).find(x=>/recommend|mitigat|action/i.test(x.heading||""));
+  return sec?sec.body:"—";
+}
+function addLedgerRow(caseId,p,cs,whenIso){
+  if(ledgerRows.has(caseId)) return;
+  document.getElementById("ledger-empty").style.display="none";
+  const tr=el("tr","row");
+
+  /* CASE — id + wall-clock time */
+  const when=whenIso?new Date(whenIso):(cs&&cs.openedAt?new Date(cs.openedAt):new Date());
+  const tdCase=el("td");
+  tdCase.append(el("div","cid",caseId.slice(0,8)),
+                el("div","ct",when.toLocaleTimeString([],{hour12:false})));
+  tr.append(tdCase);
+
+  /* SEVERITY chip */
+  const sev=(p.overall_severity||"info").toLowerCase();
+  const tdSev=el("td");
+  tdSev.append(el("span","chip sev-"+sev,sev));
+  tr.append(tdSev);
+
+  /* PROBLEM — trigger count + nodes (from the real case_open window) */
+  const tdProb=el("td");
+  if(cs&&cs.triggers&&cs.triggers.length){
+    const nodes=[...new Set(cs.triggers.map(r=>r.node).filter(Boolean))];
+    tdProb.append(el("div","p",(cs.recordCount??cs.triggers.length)+" alerts in window · "+nodes.length+" node"+(nodes.length===1?"":"s")));
+    tdProb.append(el("div","m clamp",(cs.category||"")+(cs.category&&nodes.length?" · ":"")+nodes.slice(0,2).join(", ")));
+  }else tdProb.append(el("div","p","—"));
+  tr.append(tdProb);
+
+  /* ROOT CAUSE — reporter's words, never paraphrased */
+  const tdRoot=el("td");
+  tdRoot.append(el("div","p clamp",rootCauseOf(p)), el("div","m clamp",p.title||""));
+  tr.append(tdRoot);
+
+  /* EVIDENCE — Hunter's key finding */
+  const tdEv=el("td");
+  if(cs&&cs.hunter){
+    tdEv.append(el("div","p clamp",cs.hunter.title||"finding"));
+    const line=(cs.hunter.evidence&&cs.hunter.evidence[0])||"";
+    const conf=cs.hunter.confidence!=null?" · conf "+Math.round(cs.hunter.confidence*100)+"%":"";
+    tdEv.append(el("div","m clamp",line+conf));
+  }else tdEv.append(el("div","p","—"));
+  tr.append(tdEv);
+
+  /* BLAST RADIUS — Topology's graph */
+  const tdBlast=el("td");
+  if(cs&&cs.topo&&cs.topo.nodes){
+    const n=cs.topo.nodes.length, e=(cs.topo.edges||[]).length;
+    tdBlast.append(el("div","p",n+" node"+(n===1?"":"s")+" · "+e+" link"+(e===1?"":"s")));
+    tdBlast.append(el("div","m clamp",cs.topo.nodes.slice(0,2).map(x=>x.label||x.node_id).join(", ")));
+  }else tdBlast.append(el("div","p","—"));
+  tr.append(tdBlast);
+
+  /* RECOMMENDATION */
+  const tdRec=el("td");
+  tdRec.append(el("div","p clamp",recommendationOf(p)));
+  tr.append(tdRec);
+
+  /* AGENTS — five dots, lit = contributed an artifact this case */
+  const tdAg=el("td");
+  const dots=el("div","dots");
+  for(const a of AGENT_ORDER){
+    const contributed=!!(cs&&cs.contrib&&cs.contrib.has(a));
+    const degraded=!!(cs&&cs.deg&&cs.deg.has(a));
+    const dot=el("span","dot2"+(contributed?" on":"")+(degraded?" dg":""));
+    dot.style.color=AGENT_META[a].color;
+    dot.title=AGENT_META[a].label+(degraded?" — inconclusive":contributed?" — contributed":" — not routed");
+    dots.append(dot);
+  }
+  tdAg.append(dots);
+  tr.append(tdAg);
+
+  /* MEMORY COST — working deltas vs pinned masters reused, from the ledger */
+  const tdMem=el("td","mem");
+  const led=state&&state.metrics&&state.metrics.ledger;
+  if(led){
+    const dGb=Math.max(led.deltas_gb, peakDeltas); peakDeltas=0;
+    tdMem.append(el("div","d","Δ "+dGb.toFixed(1)+" GB working"));
+    tdMem.append(el("div","r",led.masters_gb.toFixed(0)+" GB reused"));
+  }else tdMem.append(el("div","d","—"));
+  tr.append(tdMem);
+
+  document.getElementById("ledger-body").append(tr);
+  ledgerRows.set(caseId,tr);
 }
 
 /* =====================================================================
-   CITY LAYOUT — normalized (u,v) space rendered into an animated rect,
-   so the whole living city can shrink into Act III's live ribbon while
-   still running.
+   CITY LAYOUT — normalized (u,v) space over the city canvas
    ===================================================================== */
 const P={
   inlet:  [0.030,0.230],
@@ -414,15 +702,6 @@ const P={
   verdict:[0.905,0.230],
 };
 let cityRect={x:0,y:0,w:0,h:0};
-function targetCityRect(){
-  const full={x:0,y:0,w:W,h:H};
-  const ribbon={x:0,y:0,w:W,h:H*0.42};
-  const a=actBlend();
-  const rectFor=n=> n===3?ribbon:full;
-  const from=rectFor(act.prev), to=rectFor(act.cur);
-  const t=easeIO(a);
-  return {x:lerp(from.x,to.x,t),y:lerp(from.y,to.y,t),w:lerp(from.w,to.w,t),h:lerp(from.h,to.h,t)};
-}
 function cityPt(uv){ return [cityRect.x+uv[0]*cityRect.w, cityRect.y+uv[1]*cityRect.h]; }
 function cityXY(u,v){ return [cityRect.x+u*cityRect.w, cityRect.y+v*cityRect.h]; }
 
@@ -456,88 +735,110 @@ function towerCore(t){ /* pinned master core anchor (top-center of core block) *
 }
 
 /* =====================================================================
-   PARTICLES — one per real record
+   PARTICLES — one per real record. The same real stream feeds two views:
+   streaks crossing the storm, and the flume entering the city's intake.
    ===================================================================== */
-const storm=[];               // live record particles
+const storm=[];               // storm-canvas streaks
+const flume=[];               // city-canvas inlet flow
 let intakeFlash=null, triageFlash=null, retryFlash=null;
 let needles=[];               // ignition of the real trigger lines
 const drainRate=()=>clamp(recordQueue.length*1.4+8,8,300);  // catch-up pacing
 let drainAcc=0;
+let intakePulse=0;
 
-function spawnRecord(d,t){
+function spawnStormP(d,t){
   const lvl=(d.level||"INFO").toUpperCase();
   const color=LEVEL_COLOR[lvl]||LEVEL_COLOR.INFO;
   const hot=lvl!=="INFO";
-  const inCity=act.cur!==1;
   const p={
-    lvl,color,hot,d,born:t,
+    lvl,color,hot,born:t,
     size:hot?(lvl==="ERROR"||lvl==="FATAL"?3.2:2.6):1.7,
     text:(hot||Math.random()<0.14)? (d.node+"  "+(d.message||"")).slice(0,72):null,
-    mode:inCity?"flume":"storm",
+    x:-20-Math.random()*60, y:views.storm.h*0.06+Math.random()*views.storm.h*0.66,
+    vx:(hot?95:70)+Math.random()*80, vy:(Math.random()-.5)*6,
   };
-  if(p.mode==="storm"){
-    p.x=-20-Math.random()*60; p.y=H*0.06+Math.random()*H*0.66;
-    p.vx=(hot?95:70)+Math.random()*80; p.vy=(Math.random()-.5)*6;
-  }else{
-    const iy=cityPt(P.inlet)[1];
-    p.off=(Math.random()-.5)*cityRect.h*0.16;
-    p.x=cityRect.x-30-Math.random()*40; p.y=iy+p.off;
-    p.vx=120+Math.random()*60; p.vy=0;
-  }
   if(REDUCED){p.vx*=0.35;}
   storm.push(p);
   if(storm.length>1500) storm.splice(0,storm.length-1500);
 }
+function spawnFlumeP(d,t){
+  const lvl=(d.level||"INFO").toUpperCase();
+  const color=LEVEL_COLOR[lvl]||LEVEL_COLOR.INFO;
+  const hot=lvl!=="INFO";
+  const iy=cityPt(P.inlet)[1];
+  const p={
+    lvl,color,hot,born:t,mode:"flume",
+    size:hot?(lvl==="ERROR"||lvl==="FATAL"?3.2:2.6):1.7,
+    off:(Math.random()-.5)*cityRect.h*0.16,
+    x:cityRect.x-30-Math.random()*40, y:iy,
+    vx:120+Math.random()*60, vy:0,
+  };
+  p.y+=p.off;
+  if(REDUCED){p.vx*=0.35;}
+  flume.push(p);
+  if(flume.length>900) flume.splice(0,flume.length-900);
+}
 
-function updateStorm(t,dt){
+function updateParticles(t,dt){
   /* drain the real-record queue at a smoothed rate (bursts become gusts) */
   drainAcc+=drainRate()*dt;
-  while(drainAcc>=1 && recordQueue.length){ drainAcc-=1; spawnRecord(recordQueue.shift(),t); }
-  const [ixX,ixY]=cityPt(P.intake);
+  while(drainAcc>=1 && recordQueue.length){
+    drainAcc-=1;
+    const d=recordQueue.shift();
+    spawnStormP(d,t);
+    if(reveal.city) spawnFlumeP(d,t);
+  }
+  /* storm streaks fly across their own stage */
   for(let i=storm.length-1;i>=0;i--){
     const p=storm[i];
-    if(p.mode==="storm"){
-      p.x+=p.vx*dt; p.y+=p.vy*dt;
-      if(act.cur!==1){ /* storm flows INTO the pipeline: retarget to inlet */
-        p.mode="flume"; p.off=(Math.random()-.5)*cityRect.h*0.10;
-      }
-      if(p.x>W+80){ storm.splice(i,1); continue; }
-    }else{ /* flume: home to the CURRENT inlet line (rect morphs between acts) */
+    p.x+=p.vx*dt; p.y+=p.vy*dt;
+    if(p.x>views.storm.w+80) storm.splice(i,1);
+  }
+  /* flume homes to the city inlet; INFO drops into the discard drain */
+  const [ixX]=cityPt(P.intake);
+  for(let i=flume.length-1;i>=0;i--){
+    const p=flume[i];
+    if(p.mode==="flume"){
       p.x+=p.vx*dt;
       p.y+=(cityPt(P.inlet)[1]+(p.off||0)-p.y)*Math.min(1,dt*3.2);
       if(p.x>=ixX-6){
-        if(p.hot){ intakePulse=Math.min(1,intakePulse+0.5); }
-        else{ /* INFO is filtered by the burst rule: drops into the discard drain */
-          p.mode="drain"; p.vy=60+Math.random()*50; p.fade=1;
-        }
-        if(p.mode!=="drain"){ storm.splice(i,1); continue; }
+        if(p.hot){ intakePulse=Math.min(1,intakePulse+0.5); flume.splice(i,1); continue; }
+        p.mode="drain"; p.vy=60+Math.random()*50; p.fade=1;   // filtered by the burst rule
       }
     }
     if(p.mode==="drain"){
       p.y+=p.vy*dt; p.x+=14*dt; p.fade-=dt*1.4;
-      if(p.fade<=0){ storm.splice(i,1); }
+      if(p.fade<=0) flume.splice(i,1);
     }
   }
 }
-let intakePulse=0;
 
-function drawStormParticles(alpha){
-  ctx.save(); ctx.globalAlpha=alpha;
+function drawStormParticles(){
+  ctx.save();
   ctx.font=F.mono(10.5); ctx.textAlign="left";
   for(const p of storm){
-    const a=p.mode==="drain"?clamp(p.fade,0,1)*.8:1;
-    if(p.hot) drawGlow(ctx,p.color,p.x,p.y,p.size*5,.55*a);
-    ctx.fillStyle=hexA(p.color,p.hot?.95*a:.62*a);
+    if(p.hot) drawGlow(ctx,p.color,p.x,p.y,p.size*5,.55);
+    ctx.fillStyle=hexA(p.color,p.hot?.95:.62);
     ctx.fillRect(p.x-p.size*2.2,p.y-p.size/2,p.size*4.4,p.size); /* streak */
-    if(p.text && act.cur===1){
-      ctx.fillStyle=hexA(p.color,(p.hot?.5:.30)*a);
+    if(p.text){
+      ctx.fillStyle=hexA(p.color,p.hot?.5:.30);
       ctx.fillText(p.text,p.x+10,p.y+3.5);
     }
   }
   ctx.restore();
 }
+function drawFlumeParticles(){
+  ctx.save();
+  for(const p of flume){
+    const a=p.mode==="drain"?clamp(p.fade,0,1)*.8:1;
+    if(p.hot) drawGlow(ctx,p.color,p.x,p.y,p.size*5,.55*a);
+    ctx.fillStyle=hexA(p.color,p.hot?.95*a:.62*a);
+    ctx.fillRect(p.x-p.size*2.2,p.y-p.size/2,p.size*4.4,p.size);
+  }
+  ctx.restore();
+}
 
-/* ---------- needle ignition (Act I): the real trigger lines ---------- */
+/* ---------- needle ignition (storm): the real trigger lines ---------- */
 function igniteNeedles(cs,t){
   needles=(cs.triggers||[]).map((r,i)=>({
     text:`${(r.ts||"").slice(11,19)}  ${r.node}  ${r.level}  ${(r.message||"").slice(0,86)}`,
@@ -565,10 +866,10 @@ function drawNeedles(t){
 }
 
 /* =====================================================================
-   ACT I — THE STORM
+   THE STORM — a real production system failing, record by record
    ===================================================================== */
-function drawStorm(t,alpha){
-  ctx.save(); ctx.globalAlpha=alpha;
+function drawStorm(t){
+  ctx.save();
   /* HUD */
   ctx.font=F.chakra(12); ctx.fillStyle=C.dim; ctx.textAlign="left";
   ctx.fillText(("LIVE FEED · LOGHUB "+(stats.dialect||"")+" REPLAY").toUpperCase(),22,30);
@@ -595,7 +896,7 @@ function drawStorm(t,alpha){
     ctx.fillStyle=C.muted; ctx.fillText(k+" "+(stats.byLevel[k]||0),lx+13,52);
     lx+=ctx.measureText(k+" "+(stats.byLevel[k]||0)).width+34;
   });
-  drawStormParticles(1);
+  drawStormParticles();
   /* last real alert readout */
   if(stats.lastAlert){
     const la=stats.lastAlert;
@@ -607,14 +908,14 @@ function drawStorm(t,alpha){
   ctx.font=F.chakra(16,600); ctx.fillStyle=C.ink; ctx.textAlign="left";
   ctx.fillText(firstCaseAt? "There — the fateful alert lines. A case opens.":"A real production system is failing — right now.",22,H-28);
   ctx.font=F.mono(11.5); ctx.fillStyle=C.muted;
-  ctx.fillText(firstCaseAt? Object.keys(AGENT_META).length+" minds sharing one pinned memory take it from here  →  ACT II"
+  ctx.fillText(firstCaseAt? Object.keys(AGENT_META).length+" minds sharing one pinned memory take it from here — follow the case below  ↓"
                           : "Somewhere in this flood are the few lines that explain why. Every streak above is one real replayed record.",22,H-10);
   drawNeedles(t);
   ctx.restore();
 }
 
 /* =====================================================================
-   ACT II — THE LIVING CITY
+   THE LIVING CITY — the swarm working over one pinned memory
    ===================================================================== */
 function nodePos(name){
   if(name==="triage") return cityPt(P.triage);
@@ -637,10 +938,9 @@ function drawNode(x,y,label,sub,color,litAmt,shape){
 }
 function pipe(a,b){ ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); }
 
-function drawCity(t,alpha){
-  ctx.save(); ctx.globalAlpha=alpha;
+function drawCity(t){
+  ctx.save();
   const rc=cityRect;
-  const mini=rc.h<H*0.6;
 
   /* ---- static pipeline skeleton (labeled) ---- */
   ctx.strokeStyle="#2E3F4F"; ctx.lineWidth=1;
@@ -649,12 +949,15 @@ function drawCity(t,alpha){
   pipe(pInlet,pIntake); pipe(pIntake,pTriage);
   for(const ag of ["correlator","hunter","topology"]){
     const y=cityXY(0,P.laneY[ag])[1];
-    const fan=cityXY(P.fanX,0)[0], agx=cityXY(P.agentX,0)[0], mer=cityXY(P.mergeX,0)[0];
+    const fan=cityXY(P.fanX,0)[0], mer=cityXY(P.mergeX,0)[0];
     ctx.beginPath();
     ctx.moveTo(pTriage[0],pTriage[1]); ctx.lineTo(fan,y); ctx.lineTo(mer,y); ctx.lineTo(pJoin[0],pJoin[1]);
     ctx.stroke();
   }
   pipe(pJoin,pRep); pipe(pRep,pVer);
+
+  /* ---- inlet flow (the same real records, entering the pipeline) ---- */
+  drawFlumeParticles();
 
   /* ---- flume label + intake ---- */
   ctx.font=F.chakra(10); ctx.fillStyle=C.dim; ctx.textAlign="left";
@@ -672,8 +975,8 @@ function drawCity(t,alpha){
 
   /* ---- triage gate + lanes + join/reporter/verdict ---- */
   const arcT=readArcs.triage;
-  drawNode(pTriage[0],pTriage[1],"TRIAGE",mini?null:"gate · routes the case",C.cyan,arcT&&!arcDone(arcT,t)?1:0,"diamond");
-  if(triageFlash && t-triageFlash.t0<2.4 && !mini){
+  drawNode(pTriage[0],pTriage[1],"TRIAGE","gate · routes the case",C.cyan,arcT&&!arcDone(arcT,t)?1:0,"diamond");
+  if(triageFlash && t-triageFlash.t0<2.4){
     const a=1-(t-triageFlash.t0)/2.4;
     ctx.font=F.mono(10); ctx.fillStyle=hexA(C.cyan,a); ctx.textAlign="center";
     ctx.fillText("routing → "+triageFlash.routing.join(" · "),pTriage[0],pTriage[1]+34);
@@ -682,12 +985,12 @@ function drawCity(t,alpha){
     const [x,y]=nodePos(ag); const m=AGENT_META[ag];
     const lane=lanes[ag]; const arc=readArcs[ag];
     const lit=lane?1:(arc&&!arcDone(arc,t)?0.8:0);
-    drawNode(x,y,m.label,mini?null:"agent · "+MODEL_META[m.model].disp,m.color,lit,"circle");
+    drawNode(x,y,m.label,"agent · "+MODEL_META[m.model].disp,m.color,lit,"circle");
   }
-  drawNode(pJoin[0],pJoin[1],"JOIN",mini?null:"barrier · degrade-and-continue","#8FA6BC",0,"circle");
+  drawNode(pJoin[0],pJoin[1],"JOIN","barrier · degrade-and-continue","#8FA6BC",0,"circle");
   const arcR=readArcs.reporter;
-  drawNode(pRep[0],pRep[1],"REPORTER",mini?null:"verdict writer · "+MODEL_META["remanon-correlator-13b"].disp,C.crimson,arcR&&!arcDone(arcR,t)?1:0,"circle");
-  drawNode(pVer[0],pVer[1],"VERDICT",mini?null:"crystallized root cause",C.amber,verdictFx&&t-verdictFx.t0<2?1:0,"circle");
+  drawNode(pRep[0],pRep[1],"REPORTER","verdict writer · "+MODEL_META["remanon-correlator-13b"].disp,C.crimson,arcR&&!arcDone(arcR,t)?1:0,"circle");
+  drawNode(pVer[0],pVer[1],"VERDICT","crystallized root cause",C.amber,verdictFx&&t-verdictFx.t0<2?1:0,"circle");
   if(retryFlash && t-retryFlash.t0<1.2){
     const [x,y]=nodePos(retryFlash.agent)||pTriage;
     ctx.font=F.mono(9.5); ctx.fillStyle=hexA(C.crit,1-(t-retryFlash.t0)/1.2); ctx.textAlign="center";
@@ -721,10 +1024,8 @@ function drawCity(t,alpha){
     const col=L.degraded?C.dim:m.color;
     drawGlow(ctx,col,x,py,16,.8);
     ctx.fillStyle=col; ctx.beginPath(); ctx.arc(x,py,4.4,0,7); ctx.fill();
-    if(!mini){
-      ctx.font=F.mono(9); ctx.fillStyle=hexA(col,.9); ctx.textAlign="center";
-      ctx.fillText(L.degraded?"INCONCLUSIVE":(L.phase==="work"?"generating…":"artifact"),x,py-12);
-    }
+    ctx.font=F.mono(9); ctx.fillStyle=hexA(col,.9); ctx.textAlign="center";
+    ctx.fillText(L.degraded?"INCONCLUSIVE":(L.phase==="work"?"generating…":"artifact"),x,py-12);
   }
   if(typeof joinFlash==="object" && joinFlash && t-joinFlash.t0<0.8){
     drawGlow(ctx,joinFlash.color,pJoin[0],pJoin[1],40*(1+(t-joinFlash.t0)),.5*(1-(t-joinFlash.t0)/0.8));
@@ -739,7 +1040,7 @@ function drawCity(t,alpha){
     ctx.fillStyle=caseToken.color; ctx.beginPath(); ctx.arc(x,y,5.5,0,7); ctx.fill();
     ctx.strokeStyle=hexA(caseToken.color,.6); ctx.lineWidth=1;
     ctx.beginPath(); ctx.arc(x,y,9+Math.sin(t*3)*1.5,0,7); ctx.stroke();
-    if(!mini){ ctx.font=F.mono(9.5); ctx.fillStyle=hexA(caseToken.color,.95); ctx.textAlign="center"; ctx.fillText(caseToken.label,x,y-16); }
+    ctx.font=F.mono(9.5); ctx.fillStyle=hexA(caseToken.color,.95); ctx.textAlign="center"; ctx.fillText(caseToken.label,x,y-16);
     if(k>=1 && t-caseToken.t0>caseToken.dur+3) caseToken=null;
   }
 
@@ -755,22 +1056,9 @@ function drawCity(t,alpha){
     for(let i=0;i<6;i++){ const an=i/6*Math.PI*2; const rr=12*easeOut(a);
       i?ctx.lineTo(Math.cos(an)*rr,Math.sin(an)*rr):ctx.moveTo(Math.cos(an)*rr,Math.sin(an)*rr); }
     ctx.closePath(); ctx.stroke(); ctx.restore();
-    if(!mini){
-      ctx.font=F.chakra(13,700); ctx.textAlign="right"; ctx.fillStyle=hexA(C.ink,a);
-      ctx.fillText((verdictFx.sev||"").toUpperCase()+" · "+verdictFx.title.slice(0,60),rc.x+rc.w-14,y+42);
-    }
+    ctx.font=F.chakra(13,700); ctx.textAlign="right"; ctx.fillStyle=hexA(C.ink,a);
+    ctx.fillText((verdictFx.sev||"").toUpperCase()+" · "+verdictFx.title.slice(0,60),rc.x+rc.w-14,y+42);
     if(age>6) verdictFx=null;
-  }
-
-  /* ---- verdict shelf (real verdicts) ---- */
-  if(!mini && verdicts.length){
-    ctx.font=F.chakra(10); ctx.fillStyle=C.dim; ctx.textAlign="right";
-    ctx.fillText("VERDICTS · "+verdicts.length,rc.x+rc.w-14,cityXY(0,0.48)[1]);
-    ctx.font=F.mono(10);
-    verdicts.slice(-3).reverse().forEach((v,i)=>{
-      ctx.fillStyle=i===0?C.amber:C.muted;
-      ctx.fillText(((v.sev||"")+"").toUpperCase()+" — "+v.title.slice(0,52),rc.x+rc.w-14,cityXY(0,0.48)[1]+16+i*15);
-    });
   }
 
   /* ---- READ-ARCS: live generate() reads from pinned cores ---- */
@@ -793,26 +1081,22 @@ function drawCity(t,alpha){
       drawGlow(ctx,col,x,y,10,.85*fade);
       ctx.fillStyle=hexA(col,.95*fade); ctx.beginPath(); ctx.arc(x,y,2.6,0,7); ctx.fill();
     }
-    if(!mini){
-      ctx.font=F.mono(9); ctx.fillStyle=hexA(col,.8*fade); ctx.textAlign="center";
-      ctx.fillText("read · pinned master",mx,my+12);
-    }
+    ctx.font=F.mono(9); ctx.fillStyle=hexA(col,.8*fade); ctx.textAlign="center";
+    ctx.fillText("read · pinned master",mx,my+12);
   }
 
   /* ---- MODEL TOWERS (real names + sizes; amber = pinned only) ---- */
-  drawTowers(t,mini);
-  drawHbmBar(t,mini);
+  drawTowers(t);
+  drawHbmBar(t);
 
-  if(!mini){
-    ctx.font=F.mono(10); ctx.fillStyle=C.dim; ctx.textAlign="left";
-    ctx.fillText("MOTION = DATA — every particle is one replayed record or one live pipeline event",rc.x+14,rc.y+rc.h-8);
-  }
+  ctx.font=F.mono(10); ctx.fillStyle=C.dim; ctx.textAlign="left";
+  ctx.fillText("MOTION = DATA — every particle is one replayed record or one live pipeline event",rc.x+14,rc.y+rc.h-8);
   ctx.restore();
 }
 function arcDone(arc,t){ return arc.done && t>=arc.minUntil; }
 function qbez(a,c,b,t){ const u=1-t; return u*u*a+2*u*t*c+t*t*b; }
 
-function drawTowers(t,mini){
+function drawTowers(t){
   if(!towers.length){
     ctx.font=F.chakra(11); ctx.fillStyle=C.dim; ctx.textAlign="center";
     ctx.fillText("MEMORY PLANE — waiting for /api/state …",cityRect.x+cityRect.w*0.37,cityRect.y+cityRect.h*0.72);
@@ -829,7 +1113,6 @@ function drawTowers(t,mini){
     const [x0]=cityXY(tw.u0,0),[x1]=cityXY(tw.u1,0);
     const w=x1-x0, hAll=hMax*easeOut(mat);
     const coreH=hMax*(tw.master/tw.gb);
-    const weightsH=hAll-Math.min(coreH,hAll);
     /* weights body */
     ctx.fillStyle=hexA(tw.color,.16); ctx.strokeStyle=hexA(tw.color,.75); ctx.lineWidth=1.3;
     ctx.fillRect(x0,base-hAll,w,hAll); ctx.strokeRect(x0,base-hAll,w,hAll);
@@ -845,21 +1128,19 @@ function drawTowers(t,mini){
       }
       ctx.font=F.chakra(8.5,700); ctx.fillStyle=C.amber; ctx.textAlign="center";
       ctx.fillText("PINNED",x0+w/2,base-coreH+12);
-      if(tw.shared && !mini){
+      if(tw.shared){
         ctx.fillStyle=C.amber; ctx.font=F.chakra(8.5,700);
         ctx.fillText("SHARED ×2 — ONE CORE, TWO READERS",x0+w/2,base-coreH-5);
       }
     }
     /* labels: real display name + real GB from the API */
     ctx.textAlign="center";
-    ctx.font=F.chakra(mini?9.5:12.5,700); ctx.fillStyle=tw.color;
+    ctx.font=F.chakra(12.5,700); ctx.fillStyle=tw.color;
     ctx.fillText(tw.disp,x0+w/2,base+16);
-    if(!mini){
-      ctx.font=F.mono(9); ctx.fillStyle=C.muted;
-      ctx.fillText(tw.gb.toFixed(0)+" GB resident · weights "+tw.weights.toFixed(0)+" + master "+tw.master.toFixed(0),x0+w/2,base+29);
-      ctx.fillStyle=hexA(tw.color,.85);
-      ctx.fillText("⬢ "+tw.agents.join(" · "),x0+w/2,base+42);
-    }
+    ctx.font=F.mono(9); ctx.fillStyle=C.muted;
+    ctx.fillText(tw.gb.toFixed(0)+" GB resident · weights "+tw.weights.toFixed(0)+" + master "+tw.master.toFixed(0),x0+w/2,base+29);
+    ctx.fillStyle=hexA(tw.color,.85);
+    ctx.fillText("⬢ "+tw.agents.join(" · "),x0+w/2,base+42);
   }
   /* free + headroom block (from real ledger) */
   if(state){
@@ -867,19 +1148,17 @@ function drawTowers(t,mini){
     const [fx0]=cityXY(0.69,0),[fx1]=cityXY(0.955,0);
     ctx.setLineDash([4,4]); ctx.strokeStyle=hexA(C.dim,.8); ctx.lineWidth=1;
     ctx.strokeRect(fx0,base-hMax*0.6,fx1-fx0,hMax*0.6); ctx.setLineDash([]);
-    ctx.font=F.chakra(mini?9:11); ctx.fillStyle=C.dim; ctx.textAlign="center";
+    ctx.font=F.chakra(11); ctx.fillStyle=C.dim; ctx.textAlign="center";
     ctx.fillText("FREE "+led.available_gb.toFixed(0)+" GB · headroom "+state.headroom_gb.toFixed(0)+" GB",(fx0+fx1)/2,base-hMax*0.3);
-    if(!mini){
-      ctx.font=F.mono(9);
-      ctx.fillText("an 80 GB card cannot hold this city at all",(fx0+fx1)/2,base-hMax*0.3+16);
-    }
+    ctx.font=F.mono(9);
+    ctx.fillText("an 80 GB card cannot hold this city at all",(fx0+fx1)/2,base-hMax*0.3+16);
   }
 }
 
-function drawHbmBar(t,mini){
+function drawHbmBar(t){
   if(!state) return;
   const led=state.metrics.ledger;
-  const y=cityRect.y+cityRect.h*(mini?0.97:0.965), hh=mini?4:7;
+  const y=cityRect.y+cityRect.h*0.965, hh=7;
   const x0=cityXY(0.045,0)[0], x1=cityXY(0.955,0)[0];
   const cap=state.capacity_gb;
   const segs=[["weights",led.weights_gb,"#2A4A7A"],["masters (pinned)",led.masters_gb,C.amber],["deltas",led.deltas_gb,"#1A6A5E"]];
@@ -888,140 +1167,46 @@ function drawHbmBar(t,mini){
   for(const [name,gb,col] of segs){
     const w=(x1-x0)*(gb/cap);
     ctx.fillStyle=col; ctx.fillRect(x,y,Math.max(w-2,0),hh);
-    if(!mini && w>60){ ctx.fillStyle=C.dim; ctx.fillText(name+" "+gb.toFixed(0),x,y-4); }
+    if(w>60){ ctx.fillStyle=C.dim; ctx.fillText(name+" "+gb.toFixed(0),x,y-4); }
     x+=w;
   }
   ctx.strokeStyle=C.hair; ctx.strokeRect(x0,y,x1-x0,hh);
-  if(!mini){ ctx.fillStyle=C.dim; ctx.textAlign="right"; ctx.fillText((state.memory_tech||"HBM")+" ledger · "+led.used_gb.toFixed(0)+" / "+cap+" GB used",x1,y-4); }
-}
-
-/* =====================================================================
-   ACT III — THE SHOWDOWN (live counters; ours real, baseline unmeasured)
-   ===================================================================== */
-const odo={};   // eased display values
-function odoVal(key,target){
-  const cur=odo[key]===undefined?target:odo[key];
-  odo[key]=Math.abs(target-cur)<0.01?target:cur+(target-cur)*0.12;
-  return odo[key];
-}
-const metricPulses=[];
-function spawnMetricPulses(kind,n){
-  const cap=Math.min(n,14);
-  for(let i=0;i<cap;i++) metricPulses.push({kind,t0:nowS()+i*0.12});
-}
-function drawShowdown(t,alpha){
-  if(alpha<=0) return;
-  ctx.save(); ctx.globalAlpha=alpha;
-  const top=cityRect.y+cityRect.h+8;
-  const hh=H-top;
-  const midX=W*0.52;
-  const m=state?state.metrics:null;
-
-  ctx.font=F.chakra(12); ctx.textAlign="left"; ctx.fillStyle=C.dim;
-  ctx.fillText("ACT III · THE SHOWDOWN — the city above is still live; these are its numbers",22,top+18);
-
-  /* ------ REMANON column (real, live) ------ */
-  ctx.strokeStyle=hexA(C.amber,.55); ctx.lineWidth=1;
-  ctx.strokeRect(20,top+30,midX-40,hh-52);
-  ctx.font=F.chakra(14,700); ctx.fillStyle=C.amber;
-  ctx.fillText("REMANON",34,top+52);
-  ctx.font=F.mono(9.5); ctx.fillStyle=C.muted;
-  ctx.fillText("live · measured in-process, this run",34,top+66);
-
-  const cells=[
-    ["EVICTIONS", m?"0":"—", C.emerald, "pinned masters are non-evictable by construction"],
-    ["PREFILLS AVOIDED", m?Math.round(odoVal("av",m.prefills_avoided)).toString():"—", C.cyan, "master digest reused, not recomputed"],
-    ["GB SAVED", m?odoVal("gb",m.gb_saved_vs_per_agent).toFixed(1):"—", C.amber, "vs one master copy per agent"],
-    ["ACTIVE LEASES", m?Math.round(odoVal("ls",m.active_leases)).toString():"—", C.azure, "agents holding pinned context right now"],
-  ];
-  const cw=(midX-60)/2;
-  cells.forEach((c,i)=>{
-    const cx=34+(i%2)*cw, cy=top+96+Math.floor(i/2)*((hh-140)/2);
-    ctx.font=F.chakra(9.5); ctx.fillStyle=C.dim; ctx.textAlign="left";
-    ctx.fillText(c[0],cx,cy);
-    ctx.font=F.chakra(Math.min(46,hh*0.16),700); ctx.fillStyle=c[2];
-    if(c[0]==="GB SAVED") drawGlow(ctx,C.amber,cx+40,cy+30,46,.25);
-    ctx.fillText(c[1],cx,cy+Math.min(44,hh*0.155));
-    ctx.font=F.mono(9); ctx.fillStyle=C.muted;
-    ctx.fillText(c[3],cx,cy+Math.min(60,hh*0.155)+16);
-  });
-  ctx.font=F.mono(10); ctx.fillStyle=C.dim;
-  ctx.fillText("cases closed "+(state?state.cases_processed:0)+" · prefills performed "+(m?m.prefills_performed:0)+" · records replayed "+stats.records.toLocaleString(),34,top+hh-34);
-
-  /* metric pulses: one mote per real unit of saving, HBM core → GB SAVED */
-  const t120=towers.find(x=>x.shared)||towers[0];
-  for(let i=metricPulses.length-1;i>=0;i--){
-    const p=metricPulses[i]; const age=t-p.t0;
-    if(age<0) continue;
-    if(age>1){ metricPulses.splice(i,1); continue; }
-    if(!t120) continue;
-    const from=towerCore(t120);
-    const to=[34+cw+40, top+96+((hh-140)/2)+20];
-    const k=easeIO(age);
-    const x=lerp(from[0],to[0],k), y=lerp(from[1],to[1],k)-Math.sin(k*Math.PI)*40;
-    drawGlow(ctx,C.amber,x,y,12,.8*(1-k*0.5));
-    ctx.fillStyle=C.amber; ctx.beginPath(); ctx.arc(x,y,2.5,0,7); ctx.fill();
-  }
-
-  /* ------ BASELINE column (never fabricated) ------ */
-  ctx.setLineDash([5,5]); ctx.strokeStyle=hexA(C.dim,.7);
-  ctx.strokeRect(midX+20,top+30,W-midX-40,hh-52); ctx.setLineDash([]);
-  ctx.font=F.chakra(14,700); ctx.fillStyle=C.muted; ctx.textAlign="left";
-  ctx.fillText("BASELINE",midX+34,top+52);
-  ctx.font=F.mono(9.5); ctx.fillStyle=C.dim;
-  ctx.fillText("vanilla vLLM · opportunistic prefix cache",midX+34,top+66);
-  ["EVICTIONS","PREFILLS AVOIDED","GB SAVED","ACTIVE LEASES"].forEach((k,i)=>{
-    const cx=midX+34+(i%2)*cw, cy=top+96+Math.floor(i/2)*((hh-140)/2);
-    ctx.font=F.chakra(9.5); ctx.fillStyle=C.dim; ctx.fillText(k,cx,cy);
-    ctx.font=F.chakra(Math.min(46,hh*0.16),700); ctx.fillStyle=hexA(C.dim,.9);
-    ctx.fillText("—",cx,cy+Math.min(44,hh*0.155));
-  });
-  ctx.font=F.chakra(11,600); ctx.fillStyle=C.muted;
-  ctx.fillText("baseline: measured on hardware day (D-03)",midX+34,top+hh-48);
-  ctx.font=F.mono(9.5); ctx.fillStyle=C.dim;
-  ctx.fillText("this column stays empty until it is measured — no fabricated numbers",midX+34,top+hh-34);
-
-  ctx.restore();
+  ctx.fillStyle=C.dim; ctx.textAlign="right";
+  ctx.fillText((state.memory_tech||"HBM")+" ledger · "+led.used_gb.toFixed(0)+" / "+cap+" GB used",x1,y-4);
 }
 let joinFlash=null;
 
 /* =====================================================================
-   MAIN LOOP
+   MAIN LOOP — simulate always (cheap, bounded), draw only what's on screen
    ===================================================================== */
 let lastT=nowS();
 function frame(){
   const t=nowS(); const dt=Math.min(0.05,t-lastT); lastT=t;
-  cityRect=targetCityRect();
+  cityRect={x:0,y:0,w:views.city.w,h:views.city.h};
   playerTick(t);
-  updateStorm(t,dt);
+  updateParticles(t,dt);
 
-  ctx.clearRect(0,0,W,H);
-  /* soft vignette backdrop */
-  ctx.fillStyle=C.void; ctx.fillRect(0,0,W,H);
-
-  const blend=actBlend();
-  const aCur=blend, aPrev=1-blend;
-  const acts={};
-  acts[act.prev]=(acts[act.prev]||0)+aPrev;
-  acts[act.cur]=(acts[act.cur]||0)+aCur;
-
-  /* storm draws under everything when city is up (its particles feed the flume) */
-  if(acts[1]) drawStorm(t,acts[1]);
-  if(acts[2]||acts[3]){
-    if(!acts[1]) drawStormParticles(0.9);      // continuing real flow into the inlet
-    drawCity(t,(acts[2]||0)+(acts[3]||0));
+  if(views.storm.visible){
+    bind(views.storm);
+    ctx.fillStyle=C.void; ctx.fillRect(0,0,W,H);
+    drawStorm(t);
   }
-  if(acts[3]) drawShowdown(t,acts[3]);
-
+  if(views.city.visible){
+    bind(views.city);
+    ctx.fillStyle=C.void; ctx.fillRect(0,0,W,H);
+    drawCity(t);
+  }
   requestAnimationFrame(frame);
 }
 
-/* boot (URL hash #act1/#act2/#act3 pins an act — handy for rehearsal) */
-const hashAct=/^#act([123])$/.exec(location.hash);
-if(hashAct){ act.auto=false; document.getElementById("auto-btn").classList.remove("on");
-  act.prev=+hashAct[1]; act.cur=+hashAct[1]; act.tStart=0;
-  document.querySelectorAll(".act-btn").forEach(b=>b.classList.toggle("on",+b.dataset.act===act.cur)); }
-resize();
+/* boot */
+function setScrollMargins(){ /* keep section tops clear of the sticky header */
+  const h=document.querySelector("header").offsetHeight+2;
+  document.querySelectorAll("section").forEach(s=>s.style.scrollMarginTop=h+"px");
+}
+addEventListener("resize",setScrollMargins);
+setScrollMargins();
+resizeAll();
 connect();
 poll(); setInterval(poll,1500);
 requestAnimationFrame(frame);

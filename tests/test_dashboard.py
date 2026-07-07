@@ -143,9 +143,9 @@ class TestReadOnly:
             methods = getattr(route, "methods", None)
             if methods is None:
                 continue  # WebSocket route — no HTTP methods by definition
-            assert not (
-                set(methods) & _FORBIDDEN_METHODS
-            ), f"mutating method on {route.path}: {methods}"
+            assert not (set(methods) & _FORBIDDEN_METHODS), (
+                f"mutating method on {route.path}: {methods}"
+            )
             checked += 1
         assert checked >= 2  # at least "/" and "/api/state" were inspected
 
