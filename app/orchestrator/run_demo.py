@@ -17,6 +17,7 @@ from pathlib import Path
 
 import httpx
 import typer
+import uvicorn
 
 from app.adapter.digest import DigestBuilder
 from app.agents.base import MASTER_CONTEXT_ID, BaseAgent
@@ -38,6 +39,7 @@ from core.memory_model import DEFAULT_MODELS, MemoryModel
 from core.metrics import CoreMetrics
 from core.registry import EngineRegistry, default_engines
 from core.residency import ResidencyManager
+from dashboard.server import DashboardSources, create_dashboard_app
 from deploy.mock_engine.main import app as mock_app
 
 cli = typer.Typer(add_completion=False)
@@ -67,8 +69,24 @@ def demo(
         "", help="Live Contract B engine URL; empty = in-process mock engine."
     ),
     max_cases: int = typer.Option(5, help="Stop after this many cases."),
+    dashboard: bool = typer.Option(
+        False, "--dashboard", help="Serve the L9 observation plane during replay."
+    ),
+    dashboard_port: int = typer.Option(8080, help="Dashboard port."),
 ) -> None:
-    asyncio.run(_run(log_file, db, speed, burst_n, burst_window_s, base_url, max_cases))
+    asyncio.run(
+        _run(
+            log_file,
+            db,
+            speed,
+            burst_n,
+            burst_window_s,
+            base_url,
+            max_cases,
+            dashboard,
+            dashboard_port,
+        )
+    )
 
 
 async def _run(
@@ -79,6 +97,8 @@ async def _run(
     burst_window_s: float,
     base_url: str,
     max_cases: int,
+    dashboard: bool,
+    dashboard_port: int,
 ) -> None:
     # --- telemetry store ---
     if log_file is not None:
@@ -164,6 +184,24 @@ async def _run(
     orchestrator = Orchestrator(agents, EventLog())
     detector = BurstDetector(threshold=burst_n, window_s=burst_window_s)
 
+    # --- optional L9 dashboard (read-only observation plane) ---
+    dashboard_task: asyncio.Task | None = None
+    if dashboard:
+        dash_app = create_dashboard_app(
+            DashboardSources(
+                event_log=orchestrator.event_log,
+                metrics=metrics,
+                memory_model=memory_model,
+                residency=residency,
+            )
+        )
+        dash_config = uvicorn.Config(
+            dash_app, host="127.0.0.1", port=dashboard_port, log_level="warning"
+        )
+        dash_server = uvicorn.Server(dash_config)
+        dashboard_task = asyncio.create_task(dash_server.serve())
+        typer.echo(f"Dashboard live at http://127.0.0.1:{dashboard_port} (read-only)")
+
     # --- replay + pipeline ---
     cases_processed = 0
     typer.echo(f"--- replaying at {speed}x ---")
@@ -199,6 +237,13 @@ async def _run(
     typer.echo(f"active_leases        : {snapshot['active_leases']}")
     typer.echo(f"ledger.used_gb       : {snapshot['ledger']['used_gb']}")
     typer.echo(f"event_log entries    : {len(orchestrator.event_log)}")
+
+    if dashboard_task is not None:
+        typer.echo(
+            f"\nDashboard still serving at http://127.0.0.1:{dashboard_port} — Ctrl+C to exit."
+        )
+        await dashboard_task
+
     store.close()
 
 

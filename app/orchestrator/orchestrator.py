@@ -56,17 +56,44 @@ class Event:
     )
     data: dict[str, Any]
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "ts": self.ts.isoformat(),
+            "case_id": self.case_id,
+            "kind": self.kind,
+            "data": self.data,
+        }
+
 
 class EventLog:
-    """Append-only: no mutation or deletion API; reads return copies."""
+    """
+    Append-only: no mutation or deletion API; reads return copies.
+
+    Live observers (dashboard L9) call subscribe() to receive every event
+    appended after that point via an asyncio.Queue — a read-only tap.
+    """
 
     def __init__(self) -> None:
         self._events: list[Event] = []
+        self._subscribers: list[asyncio.Queue[Event]] = []
 
     def append(self, case_id: str, kind: str, **data: Any) -> Event:
         event = Event(ts=datetime.now(UTC), case_id=case_id, kind=kind, data=data)
         self._events.append(event)
+        for queue in list(self._subscribers):
+            queue.put_nowait(event)
         return event
+
+    def subscribe(self) -> asyncio.Queue[Event]:
+        queue: asyncio.Queue[Event] = asyncio.Queue()
+        self._subscribers.append(queue)
+        return queue
+
+    def unsubscribe(self, queue: asyncio.Queue[Event]) -> None:
+        try:
+            self._subscribers.remove(queue)
+        except ValueError:
+            pass
 
     def events(self, case_id: str | None = None, kind: str | None = None) -> list[Event]:
         selected = self._events

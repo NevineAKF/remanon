@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REMANON — Live Operations Theater</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void:   #07090D;
+  --panel:  #0E141B;
+  --panel2: #111922;
+  --hair:   #22303D;
+  --ink:    #E9F0F6;
+  --muted:  #7C8DA0;
+  --dim:    #48586A;
+  --cyan:    #29E0F5;
+  --crimson: #E8434A;
+  --azure:   #4C8DFF;
+  --emerald: #2FBF8F;
+  --amber:   #F5A623;
+  --crit:    #FF4B57;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:
+    radial-gradient(1100px 620px at 78% -12%,rgba(41,224,245,.05),transparent 60%),
+    radial-gradient(800px 560px at -6% 112%,rgba(232,67,74,.05),transparent 55%),
+    var(--void);
+  color:var(--ink);
+  font-family:"JetBrains Mono",ui-monospace,monospace;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+.wrap{max-width:1600px;margin:0 auto;padding:16px 18px 16px;display:flex;flex-direction:column;height:100vh;gap:10px}
+
+/* ===== HEADER ===== */
+header{
+  display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;
+  border-bottom:1px solid var(--hair);padding-bottom:12px;flex-shrink:0;
+}
+.eyebrow{font-size:10px;letter-spacing:.34em;color:var(--amber);text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.blip{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px var(--amber);flex-shrink:0}
+@keyframes blip{0%,100%{opacity:1}50%{opacity:.2}}
+.blip{animation:blip 1.7s infinite}
+h1{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:clamp(18px,2.8vw,34px);line-height:1;letter-spacing:-.01em}
+h1 .r{color:var(--amber)}
+.tagline{color:var(--muted);font-size:11px;margin-top:6px;line-height:1.6}
+.tagline b{color:var(--ink)}
+.hbm-mini{font-family:"Chakra Petch",sans-serif;text-align:right;font-size:11px;color:var(--dim);line-height:1.85;flex-shrink:0}
+.hbm-mini strong{color:var(--cyan);font-size:22px;font-weight:700;display:block;line-height:1.1}
+.hbm-mini .a{color:var(--amber)}
+.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+#conn{font-size:10px;letter-spacing:.1em;display:flex;align-items:center;gap:6px}
+#conn .dot{width:6px;height:6px;border-radius:50%;background:var(--dim)}
+#conn.live .dot{background:var(--emerald);box-shadow:0 0 8px var(--emerald);animation:blip 2s infinite}
+#conn.off .dot{background:var(--crit)}
+
+/* ===== CASE ALERT ===== */
+#case-alert{
+  display:none;overflow:hidden;position:relative;
+  background:linear-gradient(90deg,rgba(245,166,35,.12),rgba(232,67,74,.08),transparent);
+  border:1px solid rgba(245,166,35,.35);border-radius:4px;
+  padding:7px 16px;
+  font-family:"Chakra Petch",sans-serif;font-size:11.5px;letter-spacing:.08em;color:var(--amber);
+  flex-shrink:0;
+}
+#case-alert.show{display:block;animation:alertIn .45s ease}
+@keyframes alertIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+#case-alert::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(245,166,35,.07),transparent);
+  animation:sweep 2.6s linear infinite;
+}
+@keyframes sweep{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+#case-alert .cid{color:var(--ink);font-weight:700}
+
+/* ===== MAIN GRID ===== */
+.grid{
+  display:grid;
+  grid-template-columns:250px 1fr 1fr;
+  grid-template-rows:auto auto 1fr;
+  gap:9px;
+  flex:1;min-height:0;
+}
+
+/* ===== SECTION BASE ===== */
+section{
+  background:var(--panel);border:1px solid var(--hair);border-radius:5px;
+  padding:9px 11px;display:flex;flex-direction:column;overflow:hidden;min-height:0;
+}
+section > h2{
+  font-family:"Chakra Petch",sans-serif;font-size:9.5px;letter-spacing:.28em;
+  color:var(--dim);text-transform:uppercase;margin-bottom:7px;flex-shrink:0;
+}
+
+/* ===== MEMORY MAP ===== */
+#memory-panel{grid-column:1;grid-row:1/4}
+.mem-wrap{display:flex;gap:12px;flex:1;align-items:stretch;min-height:0;padding:2px 0}
+.mem-block{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0}
+.mem-col{
+  width:100%;flex:1;min-height:160px;
+  border:1px solid var(--hair);border-radius:4px;
+  display:flex;flex-direction:column-reverse;overflow:hidden;
+  background:#04070A;position:relative;
+  transition:border-color .4s,box-shadow .4s;
+}
+.mem-col.oom{border-color:var(--crit)}
+.mem-col.oom-alarm{animation:oomPulse 1.5s ease infinite}
+@keyframes oomPulse{0%,100%{box-shadow:0 0 10px rgba(255,75,87,.2)}50%{box-shadow:0 0 28px rgba(255,75,87,.5)}}
+.seg{
+  width:100%;display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;overflow:hidden;white-space:nowrap;
+  transition:height .55s ease;
+}
+.seg-weights {background:#2A4A7A;color:#9EB8D9}
+.seg-masters {background:var(--amber);color:#100B02}
+.seg-deltas  {background:#1A6A5E;color:#7ED4CA}
+.seg-headroom{background:repeating-linear-gradient(45deg,#17232C 0 5px,#0E141B 5px 10px);color:var(--dim)}
+.seg-free    {background:transparent;color:var(--dim);border-top:1px dashed var(--hair)}
+.seg-oomcap  {background:var(--crit);color:#fff;position:absolute;top:0;left:0;right:0;height:9%}
+.oom-badge{
+  position:absolute;top:7px;left:50%;transform:translateX(-50%);
+  background:var(--crit);color:#fff;font-size:8.5px;font-weight:700;
+  padding:2px 6px;border-radius:2px;white-space:nowrap;letter-spacing:.06em;
+  animation:oomPulse 1.5s ease infinite;
+}
+.mem-cap{margin-top:5px;font-family:"Chakra Petch",sans-serif;font-size:10px;color:var(--dim);text-align:center;line-height:1.6}
+.mem-legend{margin-top:7px;font-size:9px;color:var(--dim);display:flex;flex-wrap:wrap;gap:5px 9px;flex-shrink:0}
+.mem-legend em{font-style:normal;display:flex;align-items:center;gap:4px}
+.dotk{width:8px;height:8px;border-radius:2px;display:inline-block}
+
+/* ===== MODEL TOWERS ===== */
+#towers-panel{grid-column:2/4;grid-row:1;min-height:165px}
+.towers-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px;flex-shrink:0}
+.towers-head h2{margin-bottom:0}
+.towers-head .cap{font-size:9.5px;color:var(--dim)}
+.towers-row{display:flex;gap:7px;flex:1;min-height:0}
+.tower{
+  flex:1;position:relative;border-radius:4px;
+  padding:8px 9px;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  transition:box-shadow .35s;
+}
+.tower::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.06),transparent 40%);pointer-events:none}
+.tower.pinned{outline:2px solid var(--amber);outline-offset:-2px;box-shadow:0 0 20px rgba(245,166,35,.16),inset 0 0 26px rgba(245,166,35,.04)}
+.tower.lit{box-shadow:0 0 22px rgba(255,255,255,.1),inset 0 0 18px rgba(255,255,255,.04)}
+.pin-tag{
+  position:absolute;top:6px;left:7px;
+  font-family:"Chakra Petch",sans-serif;font-size:8px;font-weight:700;letter-spacing:.16em;
+  color:#100B02;background:var(--amber);padding:1px 6px;border-radius:2px;z-index:3;
+}
+.share-tag{
+  position:absolute;top:6px;right:7px;
+  font-size:8px;letter-spacing:.1em;color:var(--amber);
+  border:1px solid var(--amber);padding:1px 6px;border-radius:2px;z-index:3;
+  background:rgba(7,9,13,.65);
+}
+.t-wins{position:absolute;top:24px;left:0;right:0;display:flex;flex-wrap:wrap;gap:3px;padding:0 8px;z-index:2;pointer-events:none}
+.win{width:8px;height:8px;border-radius:1px;background:rgba(255,255,255,.09);transition:background .3s}
+.win.lit{animation:winPulse 1.3s ease infinite}
+@keyframes winPulse{0%,100%{opacity:.55}50%{opacity:1;filter:brightness(1.7)}}
+.t-name{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:clamp(9px,1.1vw,12px);line-height:1.2;position:relative;z-index:2}
+.t-gb{font-size:9px;opacity:.8;margin-top:2px;position:relative;z-index:2}
+.t-agents{font-size:8.5px;margin-top:5px;opacity:.9;position:relative;z-index:2;line-height:1.5}
+
+/* ===== KPI ROW ===== */
+#kpi-panel{grid-column:2/4;grid-row:2}
+.kpis{display:flex;gap:7px}
+.kpi{
+  flex:1;text-align:center;padding:7px 5px;
+  background:var(--panel2);border:1px solid var(--hair);border-radius:4px;
+}
+.kpi-v{
+  font-family:"Chakra Petch",sans-serif;
+  font-size:clamp(20px,2.6vw,32px);font-weight:700;line-height:1;color:var(--ink);
+}
+.kpi-v.amber{color:var(--amber);text-shadow:0 0 16px rgba(245,166,35,.28)}
+.kpi-k{font-size:8.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.13em;margin-top:3px}
+
+/* ===== AGENT STREAM ===== */
+#stream-panel{grid-column:2;grid-row:3}
+#stream{flex:1;overflow-y:auto;font-size:10.5px;line-height:1.6;scrollbar-width:thin;scrollbar-color:var(--hair) transparent}
+#stream .ln{padding:1px 0;white-space:nowrap}
+#stream .ts{color:var(--dim)}
+#stream .dg{color:var(--crit);font-weight:700}
+
+/* ===== VERDICTS ===== */
+#verdicts-panel{grid-column:3;grid-row:3}
+#verdicts{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--hair) transparent}
+.verdict{
+  border-left:3px solid var(--amber);background:var(--panel2);
+  margin-bottom:7px;padding:7px 10px;border-radius:0 4px 4px 0;
+  opacity:0;transform:translateY(8px);
+  animation:verdIn .45s ease forwards;
+}
+@keyframes verdIn{to{opacity:1;transform:none}}
+.v-head{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.v-title{font-family:"Chakra Petch",sans-serif;font-size:11.5px;font-weight:600;color:var(--ink)}
+.sev{font-family:"Chakra Petch",sans-serif;font-size:8.5px;font-weight:700;letter-spacing:.1em;padding:1px 7px;border-radius:2px;text-transform:uppercase}
+.sev-critical,.sev-high{background:var(--crit);color:#fff}
+.sev-medium{background:var(--amber);color:#100B02}
+.sev-low,.sev-info{background:var(--hair);color:var(--muted)}
+.verdict p{color:var(--dim);font-size:9.5px;margin-top:4px;line-height:1.6;white-space:normal}
+.empty{color:var(--dim);font-size:10.5px;font-style:italic}
+
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--hair);border-radius:2px}
+
+@media(max-width:860px){
+  .grid{grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto 1fr}
+  #memory-panel{grid-column:1/3;grid-row:1}
+  #towers-panel{grid-column:1/3;grid-row:2}
+  #kpi-panel{grid-column:1/3;grid-row:3}
+  #stream-panel{grid-column:1;grid-row:4}
+  #verdicts-panel{grid-column:2;grid-row:4}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div>
+    <div class="eyebrow"><span class="blip"></span> REMANON &middot; LIVE OPERATIONS THEATER</div>
+    <h1>ONE MEMORY. <span class="r">FIVE MINDS.</span> ZERO EVICTIONS.</h1>
+    <div class="tagline">GPU-resident shared-memory runtime &middot; AMD Instinct&trade; MI300X 192&thinsp;GB HBM3 &middot; <b>Maximum alignment, minimum detachment.</b></div>
+  </div>
+  <div class="hdr-right">
+    <div class="hbm-mini">
+      HBM3 POOL<br>
+      <strong id="hbm-used">&mdash;</strong>
+      / <span id="hbm-cap">192</span>&thinsp;GB<br>
+      <span class="a">pinned: <span id="hbm-pinned">&mdash;</span>&thinsp;GB</span>
+    </div>
+    <div id="conn" class="off"><span class="dot"></span><span id="conn-txt">&nbsp;connecting&hellip;</span></div>
+  </div>
+</header>
+
+<div id="case-alert" role="alert">
+  <span style="letter-spacing:.2em;font-size:10px">&#9650; CASE OPEN</span>
+  &nbsp;&middot;&nbsp;
+  <span class="cid" id="alert-cid"></span>
+  <span id="alert-detail"></span>
+</div>
+
+<main class="grid">
+
+  <section id="memory-panel">
+    <h2>Live HBM3 Memory Map</h2>
+    <div class="mem-wrap">
+      <div class="mem-block">
+        <div class="mem-col" id="col-real"></div>
+        <div class="mem-cap">192&thinsp;GB<br>MI300X HBM3</div>
+      </div>
+      <div class="mem-block">
+        <div class="mem-col" id="col-hypo"></div>
+        <div class="mem-cap">80&thinsp;GB<br>typical GPU</div>
+      </div>
+    </div>
+    <div class="mem-legend">
+      <em><span class="dotk" style="background:#2A4A7A"></span>weights</em>
+      <em><span class="dotk" style="background:var(--amber)"></span>pinned masters</em>
+      <em><span class="dotk" style="background:#1A6A5E"></span>deltas</em>
+      <em><span class="dotk" style="background:repeating-linear-gradient(45deg,#17232C 0 4px,#0E141B 4px 8px)"></span>headroom</em>
+    </div>
+  </section>
+
+  <section id="towers-panel">
+    <div class="towers-head">
+      <h2>Model Districts &mdash; Materialized Once, Pinned Forever</h2>
+      <span class="cap">width &prop; resident GB</span>
+    </div>
+    <div class="towers-row" id="towers"></div>
+  </section>
+
+  <section id="kpi-panel">
+    <h2>Runtime Metrics</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-v" id="kpi-cases">0</div><div class="kpi-k">Cases</div></div>
+      <div class="kpi"><div class="kpi-v" id="kpi-prefills">0</div><div class="kpi-k">Prefills Done</div></div>
+      <div class="kpi"><div class="kpi-v" id="kpi-avoided">0</div><div class="kpi-k">Prefills Avoided</div></div>
+      <div class="kpi"><div class="kpi-v amber" id="kpi-saved">0.0</div><div class="kpi-k">GB Saved</div></div>
+      <div class="kpi"><div class="kpi-v" id="kpi-leases">0</div><div class="kpi-k">Active Leases</div></div>
+    </div>
+  </section>
+
+  <section id="stream-panel">
+    <h2>Agent Stream</h2>
+    <div id="stream"><div class="empty">waiting for events&hellip;</div></div>
+  </section>
+
+  <section id="verdicts-panel">
+    <h2>Verdicts</h2>
+    <div id="verdicts"><div class="empty">no cases yet</div></div>
+  </section>
+
+</main>
+</div>
+<script>
+"use strict";
+/* ---- model identity -------------------------------------------------- */
+const MODEL_META = {
+  "remanon-triage-7b":     {raw:"#29E0F5", agents:["triage"],                shared:false},
+  "remanon-correlator-13b":{raw:"#E8434A", agents:["correlator","reporter"],  shared:true },
+  "remanon-hunter-13b":    {raw:"#4C8DFF", agents:["hunter"],                shared:false},
+  "remanon-topology-7b":   {raw:"#2FBF8F", agents:["topology"],              shared:false},
+};
+const FALLBACK_COLORS = ["#29E0F5","#E8434A","#4C8DFF","#2FBF8F","#F5A623"];
+const AGENT_MODEL = {
+  triage:"remanon-triage-7b", correlator:"remanon-correlator-13b",
+  hunter:"remanon-hunter-13b", topology:"remanon-topology-7b",
+  reporter:"remanon-correlator-13b",
+};
+const AGENT_COLOR = {
+  triage:"#29E0F5", correlator:"#E8434A", hunter:"#4C8DFF",
+  topology:"#2FBF8F", reporter:"#E8434A",
+};
+
+/* ---- KPI odometer ---------------------------------------------------- */
+const kpiT = {}, kpiD = {};
+let kpiRaf = false;
+function kpiTick() {
+  let mv = false;
+  for (const id in kpiT) {
+    const cur = kpiD[id] !== undefined ? kpiD[id] : kpiT[id];
+    const d = kpiT[id] - cur;
+    kpiD[id] = Math.abs(d) < 0.015 ? kpiT[id] : cur + d * 0.16;
+    if (Math.abs(kpiT[id] - kpiD[id]) > 0.01) mv = true;
+    const el = document.getElementById(id);
+    if (el) el.textContent = id === "kpi-saved" ? kpiD[id].toFixed(1) : Math.round(kpiD[id]);
+  }
+  if (mv) requestAnimationFrame(kpiTick); else kpiRaf = false;
+}
+function setKpi(id, v) {
+  kpiT[id] = v;
+  if (!kpiRaf) { kpiRaf = true; requestAnimationFrame(kpiTick); }
+}
+
+/* ---- towers ---------------------------------------------------------- */
+let towersBuilt = false;
+const towerEl = {}; // model → {el, wins}
+const activeAgents = new Set();
+
+function buildTowers(config) {
+  if (towersBuilt) return;
+  towersBuilt = true;
+  const container = document.getElementById("towers");
+  container.innerHTML = "";
+  config.forEach((spec, idx) => {
+    const meta = MODEL_META[spec.model] || {};
+    const raw  = meta.raw || FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
+    const ags  = meta.agents || [];
+    const totalGb = spec.weights_gb + spec.master_gb;
+    const winN = Math.min(Math.max(4, Math.floor(spec.weights_gb / 4)), 20);
+    let winsHtml = '<div class="t-wins">';
+    for (let i = 0; i < winN; i++) winsHtml += `<span class="win" style="background:${raw}2A"></span>`;
+    winsHtml += "</div>";
+
+    const d = document.createElement("div");
+    d.className = "tower pinned";
+    d.style.flex = String(totalGb);
+    d.style.background = `linear-gradient(180deg,${raw}2E,${raw}18)`;
+    d.style.borderTop = `3px solid ${raw}`;
+    d.innerHTML =
+      `<span class="pin-tag">PINNED</span>` +
+      (meta.shared ? `<span class="share-tag">SHARED &times;2</span>` : "") +
+      winsHtml +
+      `<div class="t-name" style="color:${raw}">${spec.model.replace("remanon-","")}</div>` +
+      `<div class="t-gb">${totalGb.toFixed(0)}&thinsp;GB resident &middot; weights + master KV</div>` +
+      `<div class="t-agents" style="color:${raw}">${ags.map(a=>"&#x2B22; "+a).join(" &middot; ")}</div>`;
+    container.appendChild(d);
+    towerEl[spec.model] = {el: d, wins: d.querySelectorAll(".win")};
+  });
+}
+
+function setTowerLit(model, on) {
+  const t = towerEl[model]; if (!t) return;
+  t.el.classList.toggle("lit", on);
+  t.wins.forEach(w => w.classList.toggle("lit", on));
+}
+
+/* ---- memory columns -------------------------------------------------- */
+function renderCol(colEl, capGb, hrGb, ledger) {
+  colEl.innerHTML = "";
+  const needGb = ledger.weights_gb + ledger.masters_gb + ledger.deltas_gb + hrGb;
+  const isOom  = needGb > capGb;
+  colEl.classList.toggle("oom",       isOom);
+  colEl.classList.toggle("oom-alarm", isOom);
+
+  const segs = [
+    {gb: ledger.weights_gb, cls:"seg-weights",  lbl:"weights"},
+    {gb: ledger.masters_gb, cls:"seg-masters",  lbl:"masters"},
+    {gb: ledger.deltas_gb,  cls:"seg-deltas",   lbl:"deltas"},
+  ];
+  let filled = 0;
+  for (const s of segs) {
+    if (s.gb <= 0) continue;
+    const vis = Math.max(0, Math.min(s.gb, capGb - filled));
+    if (vis > 0) {
+      const n = document.createElement("div");
+      n.className = "seg " + s.cls;
+      n.style.height = (vis / capGb * 100) + "%";
+      n.textContent  = s.lbl + " " + s.gb.toFixed(0);
+      n.title = s.lbl + ": " + s.gb.toFixed(1) + " GB";
+      colEl.appendChild(n);
+    }
+    filled += vis; if (filled >= capGb) break;
+  }
+  if (isOom) {
+    const b = document.createElement("div");
+    b.className = "oom-badge";
+    b.textContent = "OOM · needs " + needGb.toFixed(0) + " GB";
+    colEl.appendChild(b);
+    const c = document.createElement("div");
+    c.className = "seg seg-oomcap";
+    c.textContent = "+" + (needGb - capGb).toFixed(0) + " GB";
+    colEl.appendChild(c);
+  } else {
+    const freeGb = capGb - hrGb - filled;
+    if (freeGb > 0.5) {
+      const f = document.createElement("div");
+      f.className = "seg seg-free";
+      f.style.height = (freeGb / capGb * 100) + "%";
+      f.textContent = "free " + freeGb.toFixed(0);
+      colEl.appendChild(f);
+    }
+    const h = document.createElement("div");
+    h.className = "seg seg-headroom";
+    h.style.height = (hrGb / capGb * 100) + "%";
+    h.textContent = "headroom " + hrGb.toFixed(0);
+    colEl.appendChild(h);
+  }
+}
+
+/* ---- verdicts -------------------------------------------------------- */
+const seenVerdicts = new Set();
+function renderVerdicts(vds) {
+  const box = document.getElementById("verdicts");
+  if (!vds.length) return;
+  for (const v of [...vds].reverse()) {
+    if (seenVerdicts.has(v.case_id)) continue;
+    seenVerdicts.add(v.case_id);
+    const emp = box.querySelector(".empty"); if (emp) emp.remove();
+    const sev = (v.overall_severity || "info").toLowerCase();
+    const card = document.createElement("div");
+    card.className = "verdict";
+    card.innerHTML =
+      `<div class="v-head"><span class="sev sev-${sev}">${sev.toUpperCase()}</span>` +
+      `<span class="v-title">${esc(v.title)}</span></div>` +
+      `<p>${esc(v.executive_summary)}</p>`;
+    box.insertBefore(card, box.firstChild);
+  }
+}
+function esc(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+/* ---- agent stream ---------------------------------------------------- */
+let streamReady = false;
+const MAX_LINES = 300;
+function describe(ev) {
+  const d = ev.data || {};
+  switch (ev.kind) {
+    case "state":          return "state → " + d.state;
+    case "worker_start":   return d.agent + " start";
+    case "worker_end":     return d.agent + " end";
+    case "artifact":       return d.agent + " ✓ artifact";
+    case "degraded":       return d.agent + " DEGRADED (" + d.reason + ")";
+    case "attempt_failed": return d.agent + " attempt " + d.attempt + " failed";
+    default:               return ev.kind;
+  }
+}
+function addLine(ev) {
+  const box = document.getElementById("stream");
+  if (!streamReady) { box.innerHTML = ""; streamReady = true; }
+  const ln = document.createElement("div");
+  ln.className = "ln" + (ev.kind === "degraded" ? " dg" : "");
+  const ts    = (ev.ts || "").slice(11, 19);
+  const agent = (ev.data || {}).agent;
+  const col   = agent && AGENT_COLOR[agent] ? AGENT_COLOR[agent] : "";
+  ln.innerHTML = `<span class="ts">[${ts}]</span> <span${col ? ` style="color:${col}"` : ""}>${esc(describe(ev))}</span>`;
+  box.appendChild(ln);
+  while (box.childNodes.length > MAX_LINES) box.removeChild(box.firstChild);
+  box.scrollTop = box.scrollHeight;
+
+  /* tower pulsing */
+  if (agent) {
+    const model = AGENT_MODEL[agent];
+    if (ev.kind === "worker_start") {
+      activeAgents.add(agent);
+      if (model) setTowerLit(model, true);
+    } else if (ev.kind === "worker_end" || ev.kind === "artifact" || ev.kind === "degraded") {
+      activeAgents.delete(agent);
+      if (model) {
+        const meta = MODEL_META[model];
+        const stillOn = meta && meta.agents.some(a => a !== agent && activeAgents.has(a));
+        if (!stillOn) setTowerLit(model, false);
+      }
+    }
+  }
+  /* case-open sweep */
+  if (ev.kind === "state" && (ev.data || {}).state === "INTAKE") showAlert(ev.case_id, "");
+  /* reporter artifact triggers state refresh */
+  if (ev.kind === "artifact" && agent === "reporter") refreshState();
+}
+
+/* ---- case alert ------------------------------------------------------ */
+let alertTimer = null;
+function showAlert(caseId, detail) {
+  const el = document.getElementById("case-alert");
+  document.getElementById("alert-cid").textContent = caseId ? caseId.slice(0, 12) + "…" : "";
+  document.getElementById("alert-detail").textContent = detail ? " · " + detail : "";
+  el.classList.remove("show");
+  void el.offsetWidth; // reflow to restart animation
+  el.classList.add("show");
+  if (alertTimer) clearTimeout(alertTimer);
+  alertTimer = setTimeout(() => el.classList.remove("show"), 6500);
+}
+
+/* ---- state refresh --------------------------------------------------- */
+async function refreshState() {
+  try {
+    const state = await fetch("/api/state").then(r => r.json());
+    buildTowers(state.masters_config);
+    const ledger = state.metrics.ledger;
+    document.getElementById("hbm-used").textContent = ledger.used_gb.toFixed(0);
+    document.getElementById("hbm-cap").textContent  = state.capacity_gb;
+    document.getElementById("hbm-pinned").textContent = ledger.masters_gb.toFixed(0);
+    renderCol(document.getElementById("col-real"), state.capacity_gb, state.headroom_gb, ledger);
+    renderCol(document.getElementById("col-hypo"), 80,                state.headroom_gb, ledger);
+    setKpi("kpi-cases",   state.cases_processed);
+    setKpi("kpi-prefills",state.metrics.prefills_performed);
+    setKpi("kpi-avoided", state.metrics.prefills_avoided);
+    setKpi("kpi-saved",   state.metrics.gb_saved_vs_per_agent);
+    setKpi("kpi-leases",  state.metrics.active_leases);
+    renderVerdicts(state.verdicts);
+  } catch (_) { /* server briefly unavailable */ }
+}
+
+/* ---- websocket ------------------------------------------------------- */
+function connect() {
+  const scheme = location.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(scheme + "://" + location.host + "/ws/events");
+  const badge = document.getElementById("conn");
+  const txt   = document.getElementById("conn-txt");
+  ws.onopen    = () => { badge.className = "live"; txt.textContent = " live"; };
+  ws.onmessage = msg => addLine(JSON.parse(msg.data));
+  ws.onclose   = () => { badge.className = "off"; txt.textContent = " reconnecting…"; setTimeout(connect, 1200); };
+  ws.onerror   = () => ws.close();
+}
+refreshState();
+setInterval(refreshState, 2000);
+connect();
+</script>
+</body>
+</html>
