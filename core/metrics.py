@@ -3,7 +3,9 @@ Core metrics — Band B (Memory Arbiter).
 
 Plain-dict export of counters and gauges; the L9 dashboard consumes this
 later. gb_saved_vs_per_agent quantifies the shared-master win:
-for each model, (num_agents_sharing − 1) × master_gb.
+for each model, (num_agents_sharing − 1) × master_gb, where sharing is
+CUMULATIVE (agents that ever leased the master) — releasing a lease does
+not undo a saving that already happened.
 """
 
 from __future__ import annotations
@@ -31,10 +33,10 @@ class CoreMetrics:
         self._budgeter = budgeter
 
     def gb_saved_vs_per_agent(self) -> float:
-        """HBM3 saved by sharing masters instead of one copy per agent."""
+        """HBM3 saved by sharing masters instead of one copy per agent (cumulative)."""
         saved = 0.0
         for model, spec in self._mm.models.items():
-            sharing = len(self._residency.agents_sharing(model))
+            sharing = len(self._residency.agents_ever_leased(model))
             if sharing >= 1:
                 saved += (sharing - 1) * spec.master_gb
         return saved

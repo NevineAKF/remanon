@@ -26,6 +26,15 @@ class ModelSpec:
     weights_gb: float
     master_gb: float  # shared master context (prefill) block
 
+    def __post_init__(self) -> None:
+        # A zero-sized master would silently null the gb_saved metric; the
+        # placeholders must be explicit non-zero values (pending D-03).
+        if self.weights_gb <= 0 or self.master_gb <= 0:
+            raise ValueError(
+                f"ModelSpec {self.name!r}: weights_gb and master_gb must be > 0 "
+                f"(got weights_gb={self.weights_gb}, master_gb={self.master_gb})"
+            )
+
 
 # Dev engine topology: 4 engines serve 5 agents (reporter shares the
 # correlator-13b engine). Placeholder pending D-03.

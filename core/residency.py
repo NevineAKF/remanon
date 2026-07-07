@@ -125,10 +125,15 @@ class ResidencyManager:
         self._blocks: dict[str, Block] = {}
         self._table = LeaseTable()
         self._on_release = on_release
+        # Cumulative sharing history: once an agent has leased a model's
+        # master it has ridden the shared copy — releasing the lease does not
+        # undo that fact. Append-only; feeds gb_saved_vs_per_agent.
+        self._ever_leased: dict[str, set[str]] = {}
 
     async def lease(self, context_id: str, model: str, agent: str) -> Lease:
         async with self._lock:
             self._blocks.setdefault(model, Block(model=model, context_id=context_id))
+            self._ever_leased.setdefault(model, set()).add(agent)
             new_lease = Lease(
                 lease_id=uuid.uuid4().hex,
                 agent=agent,
@@ -166,7 +171,18 @@ class ResidencyManager:
         return model in self._blocks
 
     def agents_sharing(self, model: str) -> set[str]:
+        """Agents holding an ACTIVE lease on *model* right now (live view)."""
         return self._table.agents_for_model(model)
+
+    def agents_ever_leased(self, model: str) -> set[str]:
+        """
+        Every distinct agent that has ever leased *model*'s master (cumulative).
+
+        This is the correct input for gb_saved_vs_per_agent: the saving from a
+        shared ride happened when the lease was taken and is not reversed by
+        releasing it.
+        """
+        return set(self._ever_leased.get(model, set()))
 
     @property
     def active_leases(self) -> int:

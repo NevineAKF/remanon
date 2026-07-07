@@ -27,8 +27,11 @@ from app.dataplane.parser import parse_file
 from app.dataplane.store import TelemetryStore
 from app.orchestrator.orchestrator import BurstDetector, EventLog, Orchestrator
 from contracts.contract_a import Artifact, _load_schema
+from core.budgeter import MemoryBudgeter
 from core.generator import CoreGenerator
 from core.materializer import LazyMaterializer
+from core.memory_model import AGENT_MODEL_MAP, MemoryModel
+from core.metrics import CoreMetrics
 from core.registry import EngineRegistry, default_engines
 from core.residency import ResidencyManager
 from deploy.mock_engine.main import app as mock_app
@@ -286,6 +289,52 @@ class TestEventLogArtifacts:
 # ---------------------------------------------------------------------------
 # Intake + digest units
 # ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# Cross-layer: gb_saved must agree with the formula after a full pipeline run
+# ---------------------------------------------------------------------------
+
+
+class TestCrossLayerGbSaved:
+    async def test_gb_saved_matches_formula_and_avoided_implies_saved(self, transport) -> None:
+        """
+        Regression guard for the observed contradiction: prefills_avoided > 0
+        while gb_saved_vs_per_agent == 0.0. The saving is cumulative — leases
+        released after the case must not zero it out.
+        """
+        memory_model = MemoryModel()
+        rt = build_runtime(transport)
+        metrics = CoreMetrics(
+            memory_model=memory_model,
+            materializer=rt.materializer,
+            residency=rt.residency,
+            budgeter=MemoryBudgeter(memory_model),
+        )
+
+        result = await rt.orchestrator.run_case(make_case("case-gb-saved"))
+        assert isinstance(result, Artifact)
+        assert rt.residency.active_leases == 0, "all leases released — the hard part"
+
+        # Independent prediction, straight from the config: after a full case
+        # all five agents ran once; group them by their engine model.
+        agents_ran = {"triage", "correlator", "hunter", "topology", "reporter"}
+        per_model: dict[str, set[str]] = {}
+        for agent in agents_ran:
+            per_model.setdefault(AGENT_MODEL_MAP[agent], set()).add(agent)
+        expected = sum(
+            (len(agents) - 1) * memory_model.models[model].master_gb
+            for model, agents in per_model.items()
+        )
+        assert expected > 0, "config sanity: at least one model must be shared"
+
+        snapshot = metrics.export()
+        assert snapshot["gb_saved_vs_per_agent"] == expected
+
+        # The permanently guarded invariant: avoided prefills are avoided
+        # master copies with real size.
+        assert snapshot["prefills_avoided"] > 0
+        assert snapshot["gb_saved_vs_per_agent"] > 0
 
 
 def _sparse_real_distribution() -> list[TelemetryRecord]:

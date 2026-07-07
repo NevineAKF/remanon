@@ -126,6 +126,10 @@ async def _run(
 
     # --- boot the core ---
     memory_model = MemoryModel()
+    masters = ", ".join(
+        f"{spec.name}={spec.master_gb:g}GB" for spec in memory_model.models.values()
+    )
+    typer.echo(f"memory model masters (placeholders pending D-03): {masters}")
     budgeter = MemoryBudgeter(memory_model)
     residency = ResidencyManager(on_release=lambda lease: budgeter.release_delta(lease.lease_id))
     registry = EngineRegistry(transport=transport)
