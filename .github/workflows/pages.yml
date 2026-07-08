@@ -43,10 +43,16 @@ jobs:
           }
 
       - name: Assemble Pages site (showcase dashboard as site root)
+        # Force a CLEAN _site/ with exactly two files: the showcase build
+        # as index.html, and .nojekyll. Nothing else — no README, no repo
+        # root — ever goes into the uploaded artifact.
         run: |
+          rm -rf _site
           mkdir -p _site
           cp dashboard/showcase/index.html _site/index.html
           touch _site/.nojekyll
+          echo "--- _site contents (this is the entire published artifact) ---"
+          ls -la _site
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
