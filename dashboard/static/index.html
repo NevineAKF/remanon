@@ -24,12 +24,18 @@ body{
   overflow-x:hidden;
   padding-bottom:30px;
 }
+#topbar{position:sticky;top:0;z-index:20}
 header{
-  position:sticky;top:0;z-index:20;
   display:flex;justify-content:space-between;align-items:flex-end;gap:18px;
   padding:12px 22px 10px;border-bottom:1px solid var(--hair);
   background:rgba(7,9,13,.94);backdrop-filter:blur(8px);
 }
+#provenance{
+  font-size:10.5px;letter-spacing:.03em;color:var(--muted);text-align:center;
+  padding:7px 22px;border-bottom:1px solid var(--hair);
+  background:rgba(14,20,27,.96);backdrop-filter:blur(6px);
+}
+#provenance b{color:var(--ink);font-weight:600}
 .eyebrow{font-size:10px;letter-spacing:.34em;color:var(--amber);text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .blip{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px var(--amber);animation:blip 1.7s infinite;flex-shrink:0}
 @keyframes blip{0%,100%{opacity:1}50%{opacity:.25}}
@@ -55,6 +61,38 @@ h1 .r{color:var(--amber)}
 #conn .dot{width:6px;height:6px;border-radius:50%;background:var(--dim)}
 #conn.live .dot{background:var(--emerald);box-shadow:0 0 8px var(--emerald);animation:blip 2s infinite}
 #conn.off .dot{background:var(--crit)}
+#live-badge{
+  font-family:"Chakra Petch",sans-serif;font-size:9.5px;font-weight:700;letter-spacing:.12em;
+  padding:3px 9px;border-radius:2px;border:1px solid currentColor;text-transform:uppercase;text-align:center;
+}
+#live-badge.lb-live{color:var(--emerald)}
+#live-badge.lb-replay{color:var(--dim)}
+
+/* ---- measured/computed provenance chips ---- */
+.chip-sm{font-size:8px;padding:1px 6px;letter-spacing:.08em;font-weight:700;vertical-align:middle}
+.chip-m{color:var(--emerald)}
+.chip-c{color:var(--dim)}
+
+/* ---- MEASURED ON AMD panel — prominent, above the fold ---- */
+#sec-measured{
+  padding:18px 22px 16px;border-bottom:1px solid var(--hair);
+  background:linear-gradient(180deg,rgba(47,191,143,.06),transparent);
+}
+.ms-head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.ms-head h2{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:14px;letter-spacing:.22em;color:var(--emerald)}
+.ms-head .sub{font-size:10.5px;color:var(--muted)}
+#measured-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.mtile{border:1px solid var(--hair);border-radius:3px;padding:11px 13px 9px;background:var(--panel);min-width:0}
+.mk{
+  font-family:"Chakra Petch",sans-serif;font-size:9px;letter-spacing:.1em;color:var(--dim);
+  text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;gap:5px;margin-bottom:6px;
+}
+.mv{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:min(6vw,50px);line-height:1;color:var(--emerald);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mv.computed{color:var(--muted)}
+.mu{font-size:9px;color:var(--muted);margin-top:4px}
+.mtile.hot .mv{animation:vpulse .9s ease}
+@media(max-width:1100px){#measured-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:640px){#measured-grid{grid-template-columns:repeat(2,1fr)}}
 
 /* ---- scroll-narrative sections ---- */
 section.stage-sec{position:relative;height:calc(100vh - 122px);min-height:480px;border-bottom:1px solid var(--hair)}
@@ -122,24 +160,16 @@ td .m{color:var(--dim);font-size:10.5px;margin-top:3px}
 .mem .r{color:var(--amber);font-size:11px}
 #ledger-empty{padding:26px 10px;color:var(--dim);font-size:11px;letter-spacing:.06em}
 
-/* ---- data honesty badge ---- */
-#honesty{
-  position:fixed;bottom:0;left:0;right:0;z-index:20;
-  font-size:10px;letter-spacing:.07em;color:var(--dim);
-  padding:6px 22px;border-top:1px solid var(--hair);
-  background:rgba(7,9,13,.94);backdrop-filter:blur(8px);
-}
-#honesty b{color:var(--muted);font-weight:400}
-
 @media(prefers-reduced-motion:reduce){
   .blip,#conn .dot{animation:none!important}
-  #ledger tr.row,.tile.hot .v{animation:none!important}
+  #ledger tr.row,.tile.hot .v,.mtile.hot .mv{animation:none!important}
   html{scroll-behavior:auto}
 }
 </style>
 </head>
 <body>
 
+<div id="topbar">
 <header>
   <div>
     <div class="eyebrow"><span class="blip"></span> REMANON</div>
@@ -147,13 +177,31 @@ td .m{color:var(--dim);font-size:10.5px;margin-top:3px}
     <div class="tagline">GPU-resident shared-memory runtime for multi-agent inference &middot; <b>Maximum alignment, minimum detachment.</b></div>
   </div>
   <div class="hdr-right">
-    <div class="hbm-mini"><span id="hbm-hw" class="hw">&mdash;</span><br><strong id="hbm-used">&mdash;</strong> / <span id="hbm-cap">&mdash;</span>&thinsp;GB &nbsp;<span class="a">pinned <span id="hbm-pinned">&mdash;</span>&thinsp;GB</span></div>
+    <div class="hbm-mini"><span id="hbm-hw" class="hw">&mdash;</span><br><strong id="hbm-used">&mdash;</strong> / <span id="hbm-cap">&mdash;</span>&thinsp;GB &nbsp;<span class="a">pinned <span id="hbm-pinned">&mdash;</span>&thinsp;GB</span> <span class="chip chip-sm chip-c">computed</span></div>
     <div class="hdr-ctrl">
       <button id="run-btn">&#9654; RUN LIVE DEMO</button>
+      <div id="live-badge" class="lb-replay">REPLAY (recorded real run)</div>
       <div id="conn" class="off"><span class="dot"></span><span id="conn-txt">connecting&hellip;</span></div>
     </div>
   </div>
 </header>
+<div id="provenance">Real Loghub production logs (HDFS/BGL/Thunderbird/Spark), replayed &middot; single model measured live on AMD gfx1100 &middot; 192 GB figures are computed projections &mdash; see docs/evidence/</div>
+</div>
+
+<section id="sec-measured">
+  <div class="ms-head">
+    <h2>MEASURED ON AMD gfx1100</h2>
+    <div class="sub">real vLLM boot, this repo &middot; docs/evidence/ &middot; every number below is a direct reading, never a placeholder</div>
+  </div>
+  <div id="measured-grid">
+    <div class="mtile"><div class="mk">Weights loaded<span class="chip chip-sm chip-m">measured</span></div><div class="mv" id="ev-weights">&mdash;</div><div class="mu">GiB</div></div>
+    <div class="mtile"><div class="mk">KV cache<span class="chip chip-sm chip-m">measured</span></div><div class="mv" id="ev-kv">&mdash;</div><div class="mu">GiB</div></div>
+    <div class="mtile"><div class="mk">KV tokens<span class="chip chip-sm chip-m">measured</span></div><div class="mv" id="ev-tokens">&mdash;</div><div class="mu">tokens</div></div>
+    <div class="mtile"><div class="mk">Prefix hit rate<span class="chip chip-sm chip-m">measured</span></div><div class="mv" id="ev-hitrate">&mdash;</div><div class="mu">%</div></div>
+    <div class="mtile"><div class="mk">Prefix speedup<span class="chip chip-sm chip-c">computed</span></div><div class="mv computed" id="ev-speedup">&mdash;</div><div class="mu">&times; (cold&thinsp;/&thinsp;warm, measured)</div></div>
+    <div class="mtile"><div class="mk">VRAM used<span class="chip chip-sm chip-m">measured</span></div><div class="mv" id="ev-vram">&mdash;</div><div class="mu">GB</div></div>
+  </div>
+</section>
 
 <section class="stage-sec" id="sec-storm">
   <canvas id="cv-storm" class="stage"></canvas>
@@ -179,7 +227,7 @@ td .m{color:var(--dim);font-size:10.5px;margin-top:3px}
     <div id="synth">
       <div class="tile"><div class="k">Cases closed</div><div class="v" id="st-cases">&mdash;</div><div class="s">verdicts delivered this run</div></div>
       <div class="tile"><div class="k">Prefills avoided</div><div class="v c" id="st-avoid">&mdash;</div><div class="s">master digest reused, not recomputed</div></div>
-      <div class="tile"><div class="k">GB saved</div><div class="v a" id="st-saved">&mdash;</div><div class="s">vs one master copy per agent</div></div>
+      <div class="tile"><div class="k">GB saved <span class="chip chip-sm chip-c">computed</span></div><div class="v a" id="st-saved">&mdash;</div><div class="s">vs one master copy per agent</div></div>
       <div class="tile"><div class="k">Evictions</div><div class="v e" id="st-evict">&mdash;</div><div class="s">pinned masters are non-evictable by construction</div></div>
     </div>
     <table id="ledger">
@@ -197,8 +245,6 @@ td .m{color:var(--dim);font-size:10.5px;margin-top:3px}
   </div>
   <div class="veil">awaiting first verdict&hellip;</div>
 </section>
-
-<footer id="honesty">replay: <b>real HDFS production logs (Loghub)</b> &middot; <span id="engine-badge">inference: &mdash;</span></footer>
 
 <script>
 "use strict";
@@ -417,14 +463,29 @@ async function poll(){
     state=s;
     if(!towers.length && s.masters_config && s.masters_config.length) buildTowers(s.masters_config);
     const led=s.metrics.ledger, m=s.metrics;
+    /* hardware label — the ACTIVE profile (measured card by default), never
+       hardcoded, always carrying its own MEASURED/COMPUTED source tag. */
     document.getElementById("hbm-hw").textContent=s.hardware||"GPU POOL";
     document.getElementById("hbm-used").textContent=led.used_gb.toFixed(0);
     document.getElementById("hbm-cap").textContent=s.capacity_gb;
     document.getElementById("hbm-pinned").textContent=led.masters_gb.toFixed(0);
-    /* data honesty badge — flips by itself on hardware day */
-    document.getElementById("engine-badge").textContent =
-      s.engine_mode==="live" ? "inference: live on "+(s.hardware||"target hardware")
-                             : "inference: mock engine — hardware validation pending (D-03)";
+    /* LIVE badge — reflects the real engine_mode, never a fixed claim */
+    const liveBadge=document.getElementById("live-badge");
+    const isLive=s.engine_mode==="live";
+    liveBadge.textContent=isLive?"LIVE":"REPLAY (recorded real run)";
+    liveBadge.className=isLive?"lb-live":"lb-replay";
+    /* MEASURED ON AMD panel — the six real evidence.* numbers, verbatim
+       from docs/evidence/ via /api/state; only prefix_speedup is computed
+       (from two measured values), and is chipped as such in the HTML. */
+    if(s.evidence){
+      const ev=s.evidence;
+      setTile("ev-weights", ev.weights_gib!=null?ev.weights_gib.toFixed(1):"—");
+      setTile("ev-kv", ev.kv_cache_gib!=null?ev.kv_cache_gib.toFixed(2):"—");
+      setTile("ev-tokens", ev.kv_cache_tokens!=null?ev.kv_cache_tokens.toLocaleString():"—");
+      setTile("ev-hitrate", ev.prefix_hit_rate_pct!=null?ev.prefix_hit_rate_pct.toFixed(1):"—");
+      setTile("ev-speedup", ev.prefix_speedup!=null?ev.prefix_speedup.toFixed(1)+"x":"—");
+      setTile("ev-vram", ev.vram_used_gb!=null?ev.vram_used_gb.toFixed(2):"—");
+    }
     /* synthesis strip (real, live) */
     setStat("st-cases", String(s.cases_processed));
     setStat("st-avoid", String(m.prefills_avoided));
@@ -455,6 +516,16 @@ async function poll(){
     if(preSession) activate("results", false);
     peakDeltas=Math.max(peakDeltas, led.deltas_gb);
   }catch(_){/* server briefly unavailable */}
+}
+/* MEASURED ON AMD panel tiles: same "only pulse on a real value change"
+   rule as setStat(), scoped to .mtile instead of .tile. */
+function setTile(id,val){
+  const e=document.getElementById(id);
+  if(e.textContent===val) return;
+  e.textContent=val;
+  const tile=e.closest(".mtile");
+  if(!tile) return;
+  tile.classList.remove("hot"); void tile.offsetWidth; tile.classList.add("hot");
 }
 function setStat(id,val){
   const e=document.getElementById(id);
@@ -703,6 +774,7 @@ function addLedgerRow(caseId,p,cs,whenIso){
     const dGb=Math.max(led.deltas_gb, peakDeltas); peakDeltas=0;
     tdMem.append(el("div","d","Δ "+dGb.toFixed(1)+" GB working"));
     tdMem.append(el("div","r",led.masters_gb.toFixed(0)+" GB reused"));
+    tdMem.append(el("span","chip chip-sm chip-c","computed"));
   }else tdMem.append(el("div","d","—"));
   tr.append(tdMem);
 
@@ -1128,6 +1200,9 @@ function drawTowers(t){
   const hMax=cityRect.h*0.315;
   ctx.font=F.chakra(10); ctx.fillStyle=C.dim; ctx.textAlign="left";
   ctx.fillText("THE MEMORY — MATERIALIZED ONCE · PINNED FOREVER (width ∝ resident GB)",cityXY(0.045,0)[0],base-hMax-26);
+  ctx.font=F.mono(8.5); ctx.fillStyle=hexA(C.dim,.85); ctx.textAlign="right";
+  ctx.fillText("COMPUTED — 192 GB MI300X target, not yet measured · docs/evidence/",cityXY(0.955,0)[0],base-hMax-26);
+  ctx.textAlign="left";
 
   for(const tw of towers){
     const mat=clamp((t-tw.matAt)/0.9,0,1);          // one-time rise
@@ -1194,7 +1269,7 @@ function drawHbmBar(t){
   }
   ctx.strokeStyle=C.hair; ctx.strokeRect(x0,y,x1-x0,hh);
   ctx.fillStyle=C.dim; ctx.textAlign="right";
-  ctx.fillText((state.memory_tech||"HBM")+" ledger · "+led.used_gb.toFixed(0)+" / "+cap+" GB used",x1,y-4);
+  ctx.fillText((state.memory_tech||"HBM")+" ledger · "+led.used_gb.toFixed(0)+" / "+cap+" GB used (computed)",x1,y-4);
 }
 let joinFlash=null;
 
@@ -1222,8 +1297,8 @@ function frame(){
 }
 
 /* boot */
-function setScrollMargins(){ /* keep section tops clear of the sticky header */
-  const h=document.querySelector("header").offsetHeight+2;
+function setScrollMargins(){ /* keep section tops clear of the sticky topbar (header + provenance bar) */
+  const h=document.querySelector("#topbar").offsetHeight+2;
   document.querySelectorAll("section").forEach(s=>s.style.scrollMarginTop=h+"px");
 }
 addEventListener("resize",setScrollMargins);

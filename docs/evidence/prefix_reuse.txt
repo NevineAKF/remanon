@@ -1,0 +1,11 @@
+PREFIX REUSE — COLD / WARM / WARM2 — measured, AMD gfx1100 48GB, ROCm 7.2,
+vLLM 0.16.1 (Jul 8 2026 session)
+
+Source: golden_experiment_prefix_reuse.txt (this directory) — lines 5-7,
+same measurement, restated here as key:value pairs for
+app/config/evidence.py to parse directly. prefix_speedup is COMPUTED as
+cold_s / warm_s from these same measured values (not itself a raw reading).
+
+cold_s: 10.635
+warm_s: 1.839
+warm2_s: 0.333

@@ -1,0 +1,12 @@
+MODEL LOAD + KV CACHE + PREFIX HIT RATE — measured, AMD gfx1100 48GB, ROCm 7.2,
+vLLM 0.16.1.dev0+g89a77b108.d20260318 (Jul 8 2026 session)
+
+Source: vllm_boot.log (this directory) — lines 46 (model load), 47-48 (KV
+cache), 93-94 (prefix cache hit rate). Restated here as key:value pairs so
+app/config/evidence.py can parse real numbers without re-parsing the full
+boot log on every request.
+
+weights_gib: 14.3
+kv_cache_gib: 26.67
+kv_cache_tokens: 582576
+prefix_hit_rate_pct: 66.3

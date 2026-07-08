@@ -9,13 +9,15 @@ plane cannot mutate Band B.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, PlainTextResponse
 
+from app.config.evidence import load_measured_evidence
+from app.config.hardware import HardwareProfile, active_profile
 from app.orchestrator.orchestrator import EventLog
 from app.orchestrator.report import (
     build_incident_report,
@@ -38,12 +40,18 @@ class DashboardSources:
     metrics: CoreMetrics
     memory_model: MemoryModel
     residency: ResidencyManager
-    # Deployment labels for the observation plane; capacity itself always
-    # comes from the MemoryModel so the two can never disagree.
-    hardware_name: str = "AMD Instinct™ MI300X"
+    # The ACTIVE hardware this run is on — env-selected (REMANON_HW), never
+    # hardcoded to the unmeasured MI300X. Independent of memory_model's
+    # capacity_gb, which is Core's own fixed COMPUTED placeholder — the two
+    # deliberately do not have to agree; each is labeled honestly instead.
+    hardware_profile: HardwareProfile = field(default_factory=active_profile)
     memory_tech: str = "HBM3"
     # "mock" until D-03 hardware validation; flips to "live" on real silicon.
     engine_mode: str = "mock"
+
+    @property
+    def hardware_name(self) -> str:
+        return self.hardware_profile.name
 
 
 def build_state_snapshot(sources: DashboardSources, last_events: int = 200) -> dict[str, Any]:
@@ -53,6 +61,8 @@ def build_state_snapshot(sources: DashboardSources, last_events: int = 200) -> d
     in-process, without an HTTP round trip.
     """
     mm = sources.memory_model
+    profile = sources.hardware_profile
+    evidence = load_measured_evidence()
     events = sources.event_log.events()
 
     verdicts = []
@@ -72,16 +82,33 @@ def build_state_snapshot(sources: DashboardSources, last_events: int = 200) -> d
     return {
         "metrics": sources.metrics.export(),
         "capacity_gb": mm.total_capacity_gb,
+        "capacity_source": "computed",  # MI300X 192 GB target — core/memory_model.py, not measured
         "headroom_gb": mm.headroom_gb,
-        "hardware": (
-            f"{sources.hardware_name} · {mm.total_capacity_gb:g} GB {sources.memory_tech}"
-        ),
+        "headroom_source": "computed",
+        # Honest hardware label: the ACTIVE profile (env REMANON_HW, default
+        # MEASURED) — independent of capacity_gb above. Never hardcodes MI300X.
+        "hardware": profile.label,
+        "hardware_profile": {
+            "name": profile.name,
+            "gfx": profile.gfx,
+            "vram_gb": profile.vram_gb,
+            "source": profile.source,
+            "label": profile.label,
+        },
         "memory_tech": sources.memory_tech,
         "engine_mode": sources.engine_mode,
         "masters_config": [
-            {"model": spec.name, "weights_gb": spec.weights_gb, "master_gb": spec.master_gb}
+            {
+                "model": spec.name,
+                "weights_gb": spec.weights_gb,
+                "master_gb": spec.master_gb,
+                "source": "computed",  # sized for the 192 GB MI300X target, not measured
+            }
             for spec in mm.models.values()
         ],
+        # The six real, directly-measured numbers (docs/evidence/) — always
+        # exposed as-is, never overwritten by a synthetic/placeholder value.
+        "evidence": evidence.to_dict(),
         "active_leases": [
             {
                 "lease_id": lease.lease_id,

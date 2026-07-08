@@ -64,3 +64,14 @@ def parse_file(path: Path) -> ParseResult:
     """Convenience wrapper: open a log file and parse all lines."""
     with path.open(encoding="utf-8", errors="replace") as fh:
         return parse_lines(fh)
+
+
+def read_raw_lines(path: Path) -> list[str]:
+    """
+    Read a log file as raw, non-blank lines, no dialect-specific parsing
+    applied. For dialects whose format doesn't fit ParsedLine (see
+    normalizer.py's parse_raw()) — the caller's normalizer does the real
+    per-line regex parsing directly against these strings.
+    """
+    with path.open(encoding="utf-8", errors="replace") as fh:
+        return [line for line in (raw.rstrip("\n\r") for raw in fh) if line.strip()]
