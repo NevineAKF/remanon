@@ -89,6 +89,39 @@ remanon/
 
 ---
 
+## Live demo
+
+`dashboard/showcase/index.html` is a self-contained, static build of the
+Live Operations Theater dashboard — a real recorded run (real HDFS
+production logs, replayed through the full agent pipeline), not a mock-up.
+It embeds its data inline, so it needs no server: open it directly, or host
+it anywhere static files are served, e.g. GitHub Pages at:
+
+```
+https://nevineakf.github.io/remanon/
+```
+
+(once Pages is enabled for this repo, pointed at `dashboard/showcase/`).
+
+**Regenerate the recording** after a pipeline or dashboard change:
+
+```bash
+python -m app.orchestrator.run_demo --record --no-export --speed 1000
+```
+
+This replays the full telemetry store, captures the complete EventLog
+stream plus a series of timestamped `/api/state` snapshots, and writes:
+
+- `dashboard/showcase/run_recording.json` — the recording, as data
+- `dashboard/showcase/index.html` — the same page with that recording
+  spliced into its inline `<script id="run-recording-data">` data island
+
+Open `dashboard/showcase/index.html` (via `file://` or a static host) and
+press **▶ RUN LIVE DEMO** to replay it. The footer always discloses that
+it's a recorded replay with a mock inference engine — it never claims live.
+
+---
+
 ## Hardware Target
 
 | Component | Spec |

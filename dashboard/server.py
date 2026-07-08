@@ -46,6 +46,59 @@ class DashboardSources:
     engine_mode: str = "mock"
 
 
+def build_state_snapshot(sources: DashboardSources, last_events: int = 200) -> dict[str, Any]:
+    """
+    The exact payload GET /api/state serves — factored out so the showcase
+    recorder (dashboard/recorder.py) can capture the same shape offline,
+    in-process, without an HTTP round trip.
+    """
+    mm = sources.memory_model
+    events = sources.event_log.events()
+
+    verdicts = []
+    for event in events:
+        if event.kind == "artifact" and event.data.get("agent") == "reporter":
+            payload = event.data["artifact_raw"]["payload"]
+            verdicts.append(
+                {
+                    "case_id": event.case_id,
+                    "ts": event.ts.isoformat(),
+                    "title": payload["title"],
+                    "overall_severity": payload["overall_severity"],
+                    "executive_summary": payload["executive_summary"],
+                }
+            )
+
+    return {
+        "metrics": sources.metrics.export(),
+        "capacity_gb": mm.total_capacity_gb,
+        "headroom_gb": mm.headroom_gb,
+        "hardware": (
+            f"{sources.hardware_name} · {mm.total_capacity_gb:g} GB {sources.memory_tech}"
+        ),
+        "memory_tech": sources.memory_tech,
+        "engine_mode": sources.engine_mode,
+        "masters_config": [
+            {"model": spec.name, "weights_gb": spec.weights_gb, "master_gb": spec.master_gb}
+            for spec in mm.models.values()
+        ],
+        "active_leases": [
+            {
+                "lease_id": lease.lease_id,
+                "agent": lease.agent,
+                "model": lease.model,
+                "created_at": lease.created_at.isoformat(),
+            }
+            for lease in sources.residency.lease_table.active()
+        ],
+        "cases_processed": sum(
+            1 for e in events if e.kind == "state" and e.data.get("state") == "EMIT"
+        ),
+        "events": [e.to_dict() for e in events[-last_events:]],
+        "verdicts": verdicts,
+    }
+
+
 def create_dashboard_app(sources: DashboardSources, last_events: int = 200) -> FastAPI:
     app = FastAPI(title="Remanon Dashboard (L9)", docs_url=None, redoc_url=None)
 
@@ -55,51 +108,7 @@ def create_dashboard_app(sources: DashboardSources, last_events: int = 200) -> F
 
     @app.get("/api/state")
     async def state() -> dict[str, Any]:
-        mm = sources.memory_model
-        events = sources.event_log.events()
-
-        verdicts = []
-        for event in events:
-            if event.kind == "artifact" and event.data.get("agent") == "reporter":
-                payload = event.data["artifact_raw"]["payload"]
-                verdicts.append(
-                    {
-                        "case_id": event.case_id,
-                        "ts": event.ts.isoformat(),
-                        "title": payload["title"],
-                        "overall_severity": payload["overall_severity"],
-                        "executive_summary": payload["executive_summary"],
-                    }
-                )
-
-        return {
-            "metrics": sources.metrics.export(),
-            "capacity_gb": mm.total_capacity_gb,
-            "headroom_gb": mm.headroom_gb,
-            "hardware": (
-                f"{sources.hardware_name} · {mm.total_capacity_gb:g} GB {sources.memory_tech}"
-            ),
-            "memory_tech": sources.memory_tech,
-            "engine_mode": sources.engine_mode,
-            "masters_config": [
-                {"model": spec.name, "weights_gb": spec.weights_gb, "master_gb": spec.master_gb}
-                for spec in mm.models.values()
-            ],
-            "active_leases": [
-                {
-                    "lease_id": lease.lease_id,
-                    "agent": lease.agent,
-                    "model": lease.model,
-                    "created_at": lease.created_at.isoformat(),
-                }
-                for lease in sources.residency.lease_table.active()
-            ],
-            "cases_processed": sum(
-                1 for e in events if e.kind == "state" and e.data.get("state") == "EMIT"
-            ),
-            "events": [e.to_dict() for e in events[-last_events:]],
-            "verdicts": verdicts,
-        }
+        return build_state_snapshot(sources, last_events)
 
     def _build_report() -> dict[str, Any]:
         events = sources.event_log.events()

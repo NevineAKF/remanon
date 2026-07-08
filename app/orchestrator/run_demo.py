@@ -13,6 +13,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import time
 from pathlib import Path
 
 import httpx
@@ -44,6 +45,7 @@ from core.memory_model import DEFAULT_MODELS, MemoryModel
 from core.metrics import CoreMetrics
 from core.registry import EngineRegistry, default_engines
 from core.residency import ResidencyManager
+from dashboard.recorder import RunRecorder, embed_recording_in_showcase, write_recording
 from dashboard.server import DashboardSources, create_dashboard_app
 from deploy.mock_engine.main import app as mock_app
 
@@ -83,6 +85,13 @@ def demo(
         "--export/--no-export",
         help="Write the incident report (CSV + Markdown) to reports/ after the run.",
     ),
+    record: bool = typer.Option(
+        False,
+        "--record",
+        help="Capture the complete run (EventLog + timestamped state snapshots) into "
+        "dashboard/showcase/run_recording.json and embed it into the showcase page, "
+        "for self-contained static hosting (GitHub Pages).",
+    ),
 ) -> None:
     asyncio.run(
         _run(
@@ -96,6 +105,7 @@ def demo(
             dashboard,
             dashboard_port,
             export,
+            record,
         )
     )
 
@@ -111,6 +121,7 @@ async def _run(
     dashboard: bool,
     dashboard_port: int,
     export: bool,
+    record: bool,
 ) -> None:
     # --- telemetry store ---
     if log_file is not None:
@@ -196,17 +207,20 @@ async def _run(
     orchestrator = Orchestrator(agents, EventLog())
     detector = BurstDetector(threshold=burst_n, window_s=burst_window_s)
 
+    # Shared, read-only view of the run — used by the optional live dashboard
+    # AND the optional showcase recorder, so both always agree with each
+    # other and with /api/state's schema (dashboard.server.build_state_snapshot).
+    sources = DashboardSources(
+        event_log=orchestrator.event_log,
+        metrics=metrics,
+        memory_model=memory_model,
+        residency=residency,
+    )
+
     # --- optional L9 dashboard (read-only observation plane) ---
     dashboard_task: asyncio.Task | None = None
     if dashboard:
-        dash_app = create_dashboard_app(
-            DashboardSources(
-                event_log=orchestrator.event_log,
-                metrics=metrics,
-                memory_model=memory_model,
-                residency=residency,
-            )
-        )
+        dash_app = create_dashboard_app(sources)
         dash_config = uvicorn.Config(
             dash_app, host="127.0.0.1", port=dashboard_port, log_level="warning"
         )
@@ -214,25 +228,39 @@ async def _run(
         dashboard_task = asyncio.create_task(dash_server.serve())
         typer.echo(f"Dashboard live at http://127.0.0.1:{dashboard_port} (read-only)")
 
+    # --- optional showcase recorder — captures the boot snapshot now, before
+    # any records have been replayed, exactly like a dashboard opened at t=0 ---
+    recorder: RunRecorder | None = None
+    if record:
+        recorder = RunRecorder(sources=sources)
+        recorder.snapshot()
+        typer.echo("Recording this run for the static showcase build...")
+
     # --- replay + pipeline ---
     cases_processed = 0
     typer.echo(f"--- replaying at {speed}x ---")
     event_log = orchestrator.event_log
-    async for record in stream(store.all_records(), speed_factor=speed):
+    last_snapshot_mono = time.monotonic()
+    async for rec in stream(store.all_records(), speed_factor=speed):
         # Feed the observation plane: one "record" event per replayed record,
         # so every particle the L9 theater draws is a real Loghub line.
         event_log.append(
             "replay",
             "record",
-            ts=record.ts.isoformat(),
-            node=record.node,
-            level=record.level,
-            component=record.component,
-            message=record.message[:160],
-            dialect=record.dialect,
+            ts=rec.ts.isoformat(),
+            node=rec.node,
+            level=rec.level,
+            component=rec.component,
+            message=rec.message[:160],
+            dialect=rec.dialect,
         )
-        case = detector.observe(record)
+        case = detector.observe(rec)
         if case is None:
+            # Periodic snapshots (~poll cadence) so the showcase header/ledger
+            # animate smoothly through the quiet stretches between cases.
+            if recorder is not None and time.monotonic() - last_snapshot_mono >= 1.5:
+                recorder.snapshot()
+                last_snapshot_mono = time.monotonic()
             continue
         event_log.append(
             case["case_id"],
@@ -249,6 +277,11 @@ async def _run(
         verdict = await orchestrator.run_case(case)
         cases_processed += 1
         _print_verdict(verdict)
+        if recorder is not None:
+            # Right after the verdict, so the recorded ledger's memory-cost
+            # figures reflect the ledger at the moment this case closed.
+            recorder.snapshot()
+            last_snapshot_mono = time.monotonic()
         if cases_processed >= max_cases:
             typer.echo(f"Reached --max-cases={max_cases}, stopping replay.")
             break
@@ -272,11 +305,31 @@ async def _run(
 
     if export:
         cases = extract_cases_from_events(event_log.events(), snapshot["ledger"])
-        report = build_incident_report(cases, snapshot, engine_mode="mock")
+        report = build_incident_report(cases, snapshot, engine_mode=sources.engine_mode)
         csv_path, md_path = export_incident_report(report, Path("reports"))
         typer.echo("\nincident report exported:")
         typer.echo(f"  {csv_path}")
         typer.echo(f"  {md_path}")
+
+    if recorder is not None:
+        recorder.snapshot()
+        meta = {
+            "recorded_at": recorder.t0.isoformat(),
+            "speed_factor": speed,
+            "burst_n": burst_n,
+            "burst_window_s": burst_window_s,
+            "record_count": store.count(),
+            "cases_processed": cases_processed,
+            "engine_mode": sources.engine_mode,
+            "hardware": sources.hardware_name,
+            "source": str(log_file) if log_file is not None else str(db),
+        }
+        recording = recorder.build_recording(meta=meta)
+        json_path = write_recording(recording)
+        html_path = embed_recording_in_showcase(recording)
+        typer.echo("\nshowcase recording written:")
+        typer.echo(f"  {json_path}")
+        typer.echo(f"  {html_path} (recording embedded — open it directly, no server needed)")
 
     if dashboard_task is not None:
         typer.echo(
