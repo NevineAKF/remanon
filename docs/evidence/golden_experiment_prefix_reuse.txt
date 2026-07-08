@@ -1,0 +1,11 @@
+GOLDEN EXPERIMENT — prefix reuse measured on AMD (Jul 8, 2026)
+Instance: gfx1100 48GB VRAM, ROCm 7.2, vLLM 0.16.1 (rocm build), --enforce-eager, --enable-prefix-caching
+Model: openai/gpt-oss-20b served via OpenAI-compatible endpoint (local weights, no external API)
+Same long-context request sent 3 times:
+  COLD  (prefill computed):  10.635 s
+  WARM  (prefix REUSED):      1.839 s   (5.8x faster)
+  WARM2 (fully warm path):    0.333 s   (32x faster)
+VRAM before boot / after boot: see vram_before.txt / vram_after.txt (model resident ~46 GB used incl. KV)
+Boot log: vllm_boot.log (Application startup complete; /v1/chat/completions served)
+Prior session (Jul 7) additionally measured: model load 14.3 GiB, KV cache 26.5 GiB / 578,848 tokens,
+GPU compute proof 20x 4096^2 matmul in 1.425 s. Screenshots archived.

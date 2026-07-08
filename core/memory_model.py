@@ -1,9 +1,16 @@
 """
 Explicit HBM3 memory model — Band B.
 
-ALL numeric values in this module are CONFIGURED PLACEHOLDERS pending the
-measured budget sheet (D-03) from the live MI300X. The arithmetic is real;
-only the numbers get replaced once measured.
+ALL numeric values in this module are CONFIGURED PLACEHOLDERS pending
+direct MI300X measurement. The arithmetic is real; only the numbers get
+replaced once measured. See docs/evidence/D03_budget_sheet.md — Tier 1
+grounds the model-load size (gpt-oss-20b: 14.0 GB placeholder here vs.
+14.3 GiB measured, 2.1% agreement) and the pinned-residency mechanism
+itself (5.8x-32x prefix-reuse speedup, measured) in real AMD hardware;
+Tier 2 is this module's own numbers run through the admission-law
+arithmetic for the 192 GB MI300X target. Weights/masters/deltas for the
+120B/70B/32B-class models and the MI300X capacity itself remain COMPUTED,
+not yet MEASURED — that gap is D-03's open follow-up.
 """
 
 from __future__ import annotations
@@ -20,7 +27,9 @@ def gb_to_bytes(gb: float) -> int:
 
 @dataclass(frozen=True, slots=True)
 class ModelSpec:
-    """Per-model memory footprint. Placeholder values pending D-03."""
+    """Per-model memory footprint. See docs/evidence/D03_budget_sheet.md
+    Tier 2 for the per-model table these values feed; only the
+    gpt-oss-20b-class weights are Tier-1 measured-agreement so far."""
 
     name: str
     weights_gb: float
@@ -37,7 +46,9 @@ class ModelSpec:
 
 
 # Dev engine topology: 4 engines serve 5 agents (reporter shares the
-# correlator-13b engine). Placeholder pending D-03.
+# correlator-13b engine). Display names → real target checkpoints:
+# triage=gpt-oss-20b, correlator/reporter=gpt-oss-120b, hunter=llama-3.3-70b,
+# topology=qwen3-32b — see docs/evidence/D03_budget_sheet.md Tier 2.
 DEFAULT_MODELS: tuple[str, ...] = (
     "remanon-triage-7b",
     "remanon-correlator-13b",
@@ -50,12 +61,16 @@ AGENT_MODEL_MAP: dict[str, str] = {
     "correlator": "remanon-correlator-13b",
     "hunter": "remanon-hunter-13b",
     "topology": "remanon-topology-7b",
-    "reporter": "remanon-correlator-13b",  # shares the 13b engine (placeholder, D-03)
+    "reporter": "remanon-correlator-13b",  # shares the 13b engine — the gpt-oss-120b
+    # SHARED x2 row in D03_budget_sheet.md Tier 2; gb_saved_vs_per_agent = 10.0 GB
 }
 
 
 def _default_model_specs() -> dict[str, ModelSpec]:
-    # Placeholder weights/master sizes pending D-03.
+    # weights_gb/master_gb: see docs/evidence/D03_budget_sheet.md Tier 2 per-model
+    # table. gpt-oss-20b's 14.0 GB weights placeholder agrees with the Tier-1
+    # measured 14.3 GiB load to within 2.1%; the other three remain COMPUTED,
+    # not yet measured on real hardware.
     return {
         "remanon-triage-7b": ModelSpec("remanon-triage-7b", weights_gb=14.0, master_gb=6.0),
         "remanon-correlator-13b": ModelSpec(
@@ -67,7 +82,9 @@ def _default_model_specs() -> dict[str, ModelSpec]:
 
 
 def _default_delta_budgets() -> dict[str, float]:
-    # Per-agent working-delta budgets. Placeholder pending D-03.
+    # Per-agent working-delta budgets — a rationing design choice, not a
+    # profiled measurement. Sum (26.0 GB) feeds the worst-case admission
+    # check in docs/evidence/D03_budget_sheet.md Tier 2; still COMPUTED.
     return {
         "triage": 4.0,
         "correlator": 6.0,
@@ -82,15 +99,17 @@ class MemoryModel:
     """
     The single source of truth for HBM3 capacity arithmetic.
 
-    total_capacity_gb: physical HBM3 on the MI300X (placeholder, D-03).
+    total_capacity_gb: physical HBM3 on the MI300X — COMPUTED target, not
+                        yet measured on real MI300X silicon (Tier 1's card
+                        is a gfx1100, 48 GB). See docs/evidence/D03_budget_sheet.md.
     headroom_gb:       reserved slack never handed to any partition.
     models:            per-model weights + master block sizes.
     agent_delta_budget_gb: per-agent cap on working deltas; agents absent
                            from this mapping have no per-agent cap.
     """
 
-    total_capacity_gb: float = 192.0  # MI300X HBM3 — placeholder pending D-03
-    headroom_gb: float = 12.0  # placeholder pending D-03
+    total_capacity_gb: float = 192.0  # MI300X HBM3 spec — COMPUTED, D03_budget_sheet.md
+    headroom_gb: float = 12.0  # reserved slack — COMPUTED, D03_budget_sheet.md
     models: dict[str, ModelSpec] = field(default_factory=_default_model_specs)
     agent_delta_budget_gb: dict[str, float] = field(default_factory=_default_delta_budgets)
 

@@ -133,3 +133,11 @@ it's a recorded replay with a mock inference engine — it never claims live.
 
 > **Note:** All logic stubs run on CPU. GPU paths are gated behind
 > `REMANON_GPU=1` (not yet implemented).
+
+**📊 [D-03 Budget Sheet](docs/evidence/D03_budget_sheet.md)** — the memory
+model above is no longer a guess. It's grounded in real AMD GPU
+measurements (model load, KV cache, VRAM before/after boot, and a
+cold/warm/warm2 prefix-reuse experiment proving pinned-residency reuse is
+5.8x–32x faster than recomputation) plus the deterministic MI300X 192 GB
+capacity table computed from `core/memory_model.py`. Every number is
+labeled MEASURED or COMPUTED, with file:line citations.
