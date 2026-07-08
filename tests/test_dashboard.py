@@ -249,3 +249,55 @@ class TestEndToEndDashboard:
         # All leases released → live lease view is empty.
         assert state["active_leases"] == []
         assert state["metrics"]["gb_saved_vs_per_agent"] > 0
+
+
+# ---------------------------------------------------------------------------
+# Incident report export — read-only, generated from the same EventLog
+# ---------------------------------------------------------------------------
+
+
+class TestReportEndpoints:
+    async def test_report_csv_endpoint(self, transport) -> None:
+        rt, _, dash_app = build_dashboard(transport)
+        await rt.orchestrator.run_case(make_case("case-report-csv"))
+
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=dash_app), base_url="http://dash"
+        ) as client:
+            response = await client.get("/api/report.csv")
+
+        assert response.status_code == 200
+        assert "text/csv" in response.headers["content-type"]
+        assert "case-report-csv" in response.text
+        assert response.text.splitlines()[0].startswith("case_id,")
+
+    async def test_report_md_endpoint(self, transport) -> None:
+        rt, _, dash_app = build_dashboard(transport)
+        await rt.orchestrator.run_case(make_case("case-report-md"))
+
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=dash_app), base_url="http://dash"
+        ) as client:
+            response = await client.get("/api/report.md")
+
+        assert response.status_code == 200
+        assert "text/markdown" in response.headers["content-type"]
+        assert response.text.startswith("# REMANON")
+        assert "case-rep" in response.text  # case_id[:8] appears in a section heading
+
+    async def test_report_endpoints_do_not_mutate_state(self, transport) -> None:
+        """Calling both report endpoints must not change /api/state's view."""
+        rt, _, dash_app = build_dashboard(transport)
+        await rt.orchestrator.run_case(make_case("case-report-readonly"))
+        before = await get_state(dash_app)
+
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=dash_app), base_url="http://dash"
+        ) as client:
+            await client.get("/api/report.csv")
+            await client.get("/api/report.md")
+
+        after = await get_state(dash_app)
+        assert before["events"] == after["events"]
+        assert before["verdicts"] == after["verdicts"]
+        assert before["metrics"] == after["metrics"]

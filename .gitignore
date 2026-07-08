@@ -48,6 +48,9 @@ Thumbs.db
 # raw data + telemetry store (never commit)
 data/
 
+# generated incident reports
+reports/
+
 .claude/
 
 !tests/fixtures/*.log

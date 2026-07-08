@@ -31,6 +31,11 @@ from app.dataplane.parser import parse_file
 from app.dataplane.replayer import stream
 from app.dataplane.store import TelemetryStore
 from app.orchestrator.orchestrator import BurstDetector, EventLog, Orchestrator
+from app.orchestrator.report import (
+    build_incident_report,
+    export_incident_report,
+    extract_cases_from_events,
+)
 from contracts.contract_a import Artifact
 from core.budgeter import MemoryBudgeter
 from core.generator import CoreGenerator
@@ -73,6 +78,11 @@ def demo(
         False, "--dashboard", help="Serve the L9 observation plane during replay."
     ),
     dashboard_port: int = typer.Option(8080, help="Dashboard port."),
+    export: bool = typer.Option(
+        True,
+        "--export/--no-export",
+        help="Write the incident report (CSV + Markdown) to reports/ after the run.",
+    ),
 ) -> None:
     asyncio.run(
         _run(
@@ -85,6 +95,7 @@ def demo(
             max_cases,
             dashboard,
             dashboard_port,
+            export,
         )
     )
 
@@ -99,6 +110,7 @@ async def _run(
     max_cases: int,
     dashboard: bool,
     dashboard_port: int,
+    export: bool,
 ) -> None:
     # --- telemetry store ---
     if log_file is not None:
@@ -257,6 +269,14 @@ async def _run(
     typer.echo(f"active_leases        : {snapshot['active_leases']}")
     typer.echo(f"ledger.used_gb       : {snapshot['ledger']['used_gb']}")
     typer.echo(f"event_log entries    : {len(orchestrator.event_log)}")
+
+    if export:
+        cases = extract_cases_from_events(event_log.events(), snapshot["ledger"])
+        report = build_incident_report(cases, snapshot, engine_mode="mock")
+        csv_path, md_path = export_incident_report(report, Path("reports"))
+        typer.echo("\nincident report exported:")
+        typer.echo(f"  {csv_path}")
+        typer.echo(f"  {md_path}")
 
     if dashboard_task is not None:
         typer.echo(

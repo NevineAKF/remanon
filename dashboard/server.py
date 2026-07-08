@@ -14,9 +14,15 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 
 from app.orchestrator.orchestrator import EventLog
+from app.orchestrator.report import (
+    build_incident_report,
+    extract_cases_from_events,
+    render_csv_report,
+    render_markdown_report,
+)
 from core.memory_model import MemoryModel
 from core.metrics import CoreMetrics
 from core.residency import ResidencyManager
@@ -94,6 +100,30 @@ def create_dashboard_app(sources: DashboardSources, last_events: int = 200) -> F
             "events": [e.to_dict() for e in events[-last_events:]],
             "verdicts": verdicts,
         }
+
+    def _build_report() -> dict[str, Any]:
+        events = sources.event_log.events()
+        ledger = sources.metrics.export()["ledger"]
+        cases = extract_cases_from_events(events, ledger)
+        return build_incident_report(
+            cases, sources.metrics.export(), engine_mode=sources.engine_mode
+        )
+
+    @app.get("/api/report.csv")
+    async def report_csv() -> PlainTextResponse:
+        return PlainTextResponse(
+            render_csv_report(_build_report()),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=incident_report.csv"},
+        )
+
+    @app.get("/api/report.md")
+    async def report_md() -> PlainTextResponse:
+        return PlainTextResponse(
+            render_markdown_report(_build_report()),
+            media_type="text/markdown",
+            headers={"Content-Disposition": "attachment; filename=incident_report.md"},
+        )
 
     @app.websocket("/ws/events")
     async def ws_events(websocket: WebSocket) -> None:

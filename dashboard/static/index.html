@@ -75,6 +75,14 @@ canvas.stage{position:absolute;inset:0;width:100%;height:100%;display:block;tran
 .sec-head h2{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:15px;letter-spacing:.24em;color:var(--ink)}
 .sec-head .sub{font-size:10.5px;color:var(--muted)}
 #run-facts{font-size:10px;color:var(--dim);letter-spacing:.05em;white-space:nowrap}
+.sec-head-r{display:flex;align-items:center;gap:16px}
+#export-btn{
+  font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:10.5px;letter-spacing:.1em;
+  padding:7px 14px;border:1px solid var(--hair);color:var(--muted);background:transparent;
+  border-radius:3px;cursor:pointer;transition:.18s;white-space:nowrap;text-transform:uppercase;
+}
+#export-btn:hover{border-color:var(--cyan);color:var(--ink)}
+#export-btn:disabled{opacity:.4;cursor:default;border-color:var(--hair);color:var(--dim)}
 #synth{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0 24px}
 .tile{border:1px solid var(--hair);border-radius:3px;padding:14px 18px 12px;background:var(--panel)}
 .tile .k{font-family:"Chakra Petch",sans-serif;font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase}
@@ -163,7 +171,10 @@ td .m{color:var(--dim);font-size:10.5px;margin-top:3px}
         <h2>LIVE RESULTS LEDGER</h2>
         <div class="sub">the agents' final product — one row per case, every value from the live run</div>
       </div>
-      <span id="run-facts">&mdash;</span>
+      <div class="sec-head-r">
+        <span id="run-facts">&mdash;</span>
+        <button id="export-btn">&#8681; EXPORT REPORT</button>
+      </div>
     </div>
     <div id="synth">
       <div class="tile"><div class="k">Cases closed</div><div class="v" id="st-cases">&mdash;</div><div class="s">verdicts delivered this run</div></div>
@@ -310,6 +321,17 @@ runBtn.onclick=()=>{
   runBtn.classList.toggle("on",reveal.follow);
   runBtn.innerHTML=reveal.follow?"&#9679; LIVE — FOLLOWING THE CASE":"&#9654; RUN LIVE DEMO";
   if(reveal.follow) document.getElementById("sec-storm").scrollIntoView({behavior:REDUCED?"auto":"smooth"});
+};
+
+/* ---------- export: hands the on-call engineer an actual file ---------- */
+const exportBtn=document.getElementById("export-btn");
+function downloadReport(url){
+  const a=document.createElement("a");
+  a.href=url; a.rel="noopener"; document.body.append(a); a.click(); a.remove();
+}
+exportBtn.onclick=()=>{
+  downloadReport("/api/report.csv");
+  setTimeout(()=>downloadReport("/api/report.md"),250);
 };
 
 /* =====================================================================
