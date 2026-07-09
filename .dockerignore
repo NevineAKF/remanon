@@ -1,0 +1,30 @@
+.git
+.venv
+venv
+env
+__pycache__
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache
+.ruff_cache
+.mypy_cache
+*.egg-info
+dist
+build
+node_modules
+
+# generated at runtime, never shipped in the image
+data/
+reports/
+*.duckdb
+
+# editor / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# env files
+.env
+.env.*

@@ -4,11 +4,17 @@ version: "3.9"
 # Remanon service graph
 # ---------------------------------------------------------------------------
 # Services:
-#   mock_engine   — Contract B stub (OpenAI-compatible vLLM imitation)
-#   orchestrator  — Band C orchestration service (placeholder)
-#   dashboard     — Observability UI (placeholder)
+#   mock_engine — Contract B stub (OpenAI-compatible vLLM imitation), as a
+#                 standalone container. Not required by `remanon` below
+#                 (which runs its own in-process mock by default) — useful
+#                 only if you want to point --base-url at it over the
+#                 network instead.
+#   remanon     — the full demo + dashboard, built from the root
+#                 Dockerfile. Self-contained: ingests real Loghub data and
+#                 serves the dashboard on :8080, GPU-free. `docker compose
+#                 up` alone is enough to see it — no other service needed.
 #
-# GPU note: add `deploy.resources.reservations.devices` under mock_engine
+# GPU note: add `deploy.resources.reservations.devices` under a service
 # when targeting a real MI300X with ROCm Docker runtime.
 # ---------------------------------------------------------------------------
 
@@ -31,25 +37,14 @@ services:
       retries: 3
     restart: unless-stopped
 
-  orchestrator:
-    image: remanon/orchestrator:dev   # built separately — placeholder
-    container_name: remanon_orchestrator
-    depends_on:
-      mock_engine:
-        condition: service_healthy
-    environment:
-      - INFERENCE_BASE_URL=http://mock_engine:8000
-      - REMANON_GPU=0
+  remanon:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: remanon/remanon:dev
+    container_name: remanon_demo
     ports:
       - "8080:8080"
-    profiles: ["app"]   # opt-in: docker compose --profile app up
-
-  dashboard:
-    image: remanon/dashboard:dev      # placeholder
-    container_name: remanon_dashboard
-    ports:
-      - "3000:3000"
-    profiles: ["app"]
 
 networks:
   default:

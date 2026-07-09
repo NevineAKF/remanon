@@ -97,6 +97,11 @@ def demo(
     dashboard: bool = typer.Option(
         False, "--dashboard", help="Serve the L9 observation plane during replay."
     ),
+    dashboard_host: str = typer.Option(
+        "127.0.0.1",
+        "--dashboard-host",
+        help="Dashboard bind address. Use 0.0.0.0 to serve outside a container.",
+    ),
     dashboard_port: int = typer.Option(8080, help="Dashboard port."),
     export: bool = typer.Option(
         True,
@@ -123,6 +128,7 @@ def demo(
             hw_label,
             max_cases,
             dashboard,
+            dashboard_host,
             dashboard_port,
             export,
             record,
@@ -237,6 +243,7 @@ async def _run(
     hw_label: str,
     max_cases: int,
     dashboard: bool,
+    dashboard_host: str,
     dashboard_port: int,
     export: bool,
     record: bool,
@@ -335,11 +342,11 @@ async def _run(
     if dashboard:
         dash_app = create_dashboard_app(sources)
         dash_config = uvicorn.Config(
-            dash_app, host="127.0.0.1", port=dashboard_port, log_level="warning"
+            dash_app, host=dashboard_host, port=dashboard_port, log_level="warning"
         )
         dash_server = uvicorn.Server(dash_config)
         dashboard_task = asyncio.create_task(dash_server.serve())
-        typer.echo(f"Dashboard live at http://127.0.0.1:{dashboard_port} (read-only)")
+        typer.echo(f"Dashboard live at http://{dashboard_host}:{dashboard_port} (read-only)")
 
     # --- optional showcase recorder — captures the boot snapshot now, before
     # any records have been replayed, exactly like a dashboard opened at t=0 ---
@@ -446,7 +453,7 @@ async def _run(
 
     if dashboard_task is not None:
         typer.echo(
-            f"\nDashboard still serving at http://127.0.0.1:{dashboard_port} — Ctrl+C to exit."
+            f"\nDashboard still serving at http://{dashboard_host}:{dashboard_port} — Ctrl+C to exit."
         )
         await dashboard_task
 

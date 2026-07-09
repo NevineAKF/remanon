@@ -41,6 +41,32 @@ round-trips.
 
   dashboard/   — observability UI (Prometheus + Rich TUI)
   deploy/      — Docker Compose + mock_engine (Contract B stub)
+
+  Dockerfile   — root-level, builds + runs the full demo dashboard
+```
+
+---
+
+## Run with Docker (GPU-free, one command)
+
+```bash
+docker build -t remanon .
+docker run -p 8080:8080 remanon
+```
+
+Open **http://localhost:8080** — the dashboard is live. On start, the
+container ingests the real Loghub sample logs (HDFS/BGL/Thunderbird/Spark/
+Hadoop — small real files, downloaded fresh each run, never synthetic),
+then replays them at 1000x through the full agent pipeline against the
+in-process mock engine, zero GPU required. Requires outbound internet
+access on `docker run` for that ingest step.
+
+`deploy/docker-compose.yml` builds the same image (`remanon` service) plus
+a standalone `mock_engine` container:
+
+```bash
+cd deploy
+docker compose up
 ```
 
 ---
@@ -82,6 +108,7 @@ remanon/
 ├── deploy/
 │   ├── docker-compose.yml
 │   └── mock_engine/           # FastAPI Contract B mock
+├── Dockerfile                 # root image: full demo + dashboard
 ├── docs/
 │   └── ARCHITECTURE.md
 └── tests/
