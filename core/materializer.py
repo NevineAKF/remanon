@@ -86,6 +86,12 @@ class LazyMaterializer:
             content = f"{content}\n{context_text}"
         await client.chat_completion(
             model=wire_model,
-            messages=[{"role": "system", "content": content}],
+            # A system-only conversation isn't generation-ready for chat
+            # templates that require alternating/user-terminated roles (real
+            # vLLM servers 400 on it) — a minimal user turn makes it valid
+            # without changing what this call does (max_tokens=1: no real
+            # output is needed, this is purely a prefill to pin the master
+            # block into KV cache).
+            messages=[{"role": "system", "content": content}, {"role": "user", "content": "."}],
             max_tokens=1,
         )
