@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 import httpx
 
 from app.adapter.contract_b_client import ContractBClient
-from core.registry import EngineRegistry
+from core.registry import EngineRegistry, resolve_engine_transport
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,12 +78,14 @@ class LazyMaterializer:
 
     async def _prefill(self, context_id: str, model: str, context_text: str | None) -> None:
         engine = self._registry.resolve(model)
-        client = ContractBClient(engine.base_url, transport=self._transport)
+        wire_model = engine.served_model or model
+        transport = resolve_engine_transport(engine, self._transport)
+        client = ContractBClient(engine.base_url, transport=transport)
         content = f"[master-prefill] context_id={context_id}"
         if context_text:
             content = f"{content}\n{context_text}"
         await client.chat_completion(
-            model=model,
+            model=wire_model,
             messages=[{"role": "system", "content": content}],
             max_tokens=1,
         )

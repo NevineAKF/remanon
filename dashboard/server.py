@@ -46,12 +46,25 @@ class DashboardSources:
     # deliberately do not have to agree; each is labeled honestly instead.
     hardware_profile: HardwareProfile = field(default_factory=active_profile)
     memory_tech: str = "HBM3"
-    # "mock" until D-03 hardware validation; flips to "live" on real silicon.
+    # "mock" until a real engine is wired (see run_demo.py --hybrid-live /
+    # --base-url); "live" iff at least one agent's calls are hitting real
+    # hardware this run. Never set independently of hw_label below.
     engine_mode: str = "mock"
+    # Which real hardware engine_mode="live" refers to (e.g. "AMD gfx1100
+    # 48GB", from run_demo.py --hw-label). None when engine_mode="mock".
+    hw_label: str | None = None
 
     @property
     def hardware_name(self) -> str:
         return self.hardware_profile.name
+
+    @property
+    def live_badge(self) -> str:
+        """The dashboard's one honest LIVE/REPLAY label, computed once here
+        so the client never has to guess how to phrase it."""
+        if self.engine_mode == "live" and self.hw_label:
+            return f"LIVE — {self.hw_label}"
+        return "REPLAY (recorded real run)"
 
 
 def build_state_snapshot(sources: DashboardSources, last_events: int = 200) -> dict[str, Any]:
@@ -97,6 +110,8 @@ def build_state_snapshot(sources: DashboardSources, last_events: int = 200) -> d
         },
         "memory_tech": sources.memory_tech,
         "engine_mode": sources.engine_mode,
+        "hw_label": sources.hw_label,
+        "live_badge": sources.live_badge,
         "masters_config": [
             {
                 "model": spec.name,

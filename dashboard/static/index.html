@@ -469,10 +469,12 @@ async function poll(){
     document.getElementById("hbm-used").textContent=led.used_gb.toFixed(0);
     document.getElementById("hbm-cap").textContent=s.capacity_gb;
     document.getElementById("hbm-pinned").textContent=led.masters_gb.toFixed(0);
-    /* LIVE badge — reflects the real engine_mode, never a fixed claim */
+    /* LIVE badge — the server computes the exact honest text (including
+       which real hardware, e.g. "LIVE — AMD gfx1100 48GB") from
+       engine_mode + hw_label; the client only ever displays it verbatim. */
     const liveBadge=document.getElementById("live-badge");
     const isLive=s.engine_mode==="live";
-    liveBadge.textContent=isLive?"LIVE":"REPLAY (recorded real run)";
+    liveBadge.textContent=s.live_badge||"REPLAY (recorded real run)";
     liveBadge.className=isLive?"lb-live":"lb-replay";
     /* MEASURED ON AMD panel — the six real evidence.* numbers, verbatim
        from docs/evidence/ via /api/state; only prefix_speedup is computed

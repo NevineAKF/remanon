@@ -41,9 +41,9 @@ from contracts.contract_a import Artifact
 from core.budgeter import MemoryBudgeter
 from core.generator import CoreGenerator
 from core.materializer import LazyMaterializer
-from core.memory_model import DEFAULT_MODELS, MemoryModel
+from core.memory_model import AGENT_MODEL_MAP, DEFAULT_MODELS, MemoryModel
 from core.metrics import CoreMetrics
-from core.registry import EngineRegistry, default_engines
+from core.registry import Engine, EngineRegistry, default_engines
 from core.residency import ResidencyManager
 from dashboard.recorder import RunRecorder, embed_recording_in_showcase, write_recording
 from dashboard.server import DashboardSources, create_dashboard_app
@@ -53,6 +53,12 @@ cli = typer.Typer(add_completion=False)
 
 _LOG_FILE_OPTION = typer.Option(None, help="Raw HDFS log to load instead of the DuckDB store.")
 _DB_OPTION = typer.Option(Path("data/store/telemetry.duckdb"), help="TelemetryStore DuckDB path.")
+
+# The real checkpoint name Triage's internal placeholder model
+# ("remanon-triage-7b", per AGENT_MODEL_MAP) stands in for — see
+# docs/evidence/D03_budget_sheet.md Tier 2. This is the only model name a
+# --hybrid-live real engine is ever asked to serve.
+HYBRID_LIVE_MODEL = "gpt-oss-20b"
 
 
 @cli.command()
@@ -74,6 +80,18 @@ def demo(
     ),
     base_url: str = typer.Option(
         "", help="Live Contract B engine URL; empty = in-process mock engine."
+    ),
+    hybrid_live: bool = typer.Option(
+        False,
+        "--hybrid-live",
+        help=f"With --base-url set: send ONLY the Triage agent ({HYBRID_LIVE_MODEL}) to the "
+        "real engine; every other agent stays on the in-process mock. Health-checks the "
+        "real engine first and falls back to full mock (never crashes) if it's unreachable.",
+    ),
+    hw_label: str = typer.Option(
+        "AMD gfx1100 48GB",
+        "--hw-label",
+        help="Hardware label the dashboard's LIVE badge shows when a real engine is wired.",
     ),
     max_cases: int = typer.Option(5, help="Stop after this many cases."),
     dashboard: bool = typer.Option(
@@ -101,6 +119,8 @@ def demo(
             burst_n,
             burst_window_s,
             base_url,
+            hybrid_live,
+            hw_label,
             max_cases,
             dashboard,
             dashboard_port,
@@ -110,6 +130,102 @@ def demo(
     )
 
 
+async def _setup_contract_b(
+    base_url: str,
+    hybrid_live: bool,
+    hw_label: str,
+    *,
+    mock_app_: object = mock_app,
+    real_transport: httpx.AsyncBaseTransport | None = None,
+) -> tuple[EngineRegistry, httpx.AsyncBaseTransport | None, str, str | None]:
+    """
+    Wire Contract B for this run. Returns (registry, default_transport,
+    engine_mode, active_hw_label).
+
+    - No base_url: full in-process mock. engine_mode="mock".
+    - base_url + --hybrid-live: health-checks the real engine FIRST (never
+      claims "live" for an engine that never actually answered). If it
+      answers for HYBRID_LIVE_MODEL, Triage's engine goes real (with its
+      served_model remapped); every other model stays on the in-process
+      mock, in the SAME registry, at the SAME time. engine_mode="live". If
+      the health check fails, falls back to full mock with a printed
+      warning — never crashes the demo.
+    - base_url alone (no --hybrid-live): the pre-existing fully-real path,
+      unchanged, now correctly labeled engine_mode="live".
+
+    `real_transport` exists only for tests, so they can stand in a fake
+    "real" engine without touching the network — production code never
+    passes it (None = genuine real TCP).
+    """
+    mock_transport = httpx.ASGITransport(app=mock_app_)
+    triage_model = AGENT_MODEL_MAP["triage"]
+
+    if not base_url:
+        registry = EngineRegistry(transport=mock_transport)
+        for engine in default_engines("http://mock-engine"):
+            registry.register(engine)
+        typer.echo("Contract B: in-process mock engine")
+        return registry, mock_transport, "mock", None
+
+    if hybrid_live:
+        probe = EngineRegistry()
+        probe.register(
+            Engine(
+                model=triage_model,
+                base_url=base_url,
+                port=8000,
+                served_model=HYBRID_LIVE_MODEL,
+                transport=real_transport,
+            )
+        )
+        healthy = (await probe.health_check()).get(triage_model, False)
+        if healthy:
+            registry = EngineRegistry()
+            registry.register(
+                Engine(
+                    model=triage_model,
+                    base_url=base_url,
+                    port=8000,
+                    served_model=HYBRID_LIVE_MODEL,
+                    transport=real_transport,
+                )
+            )
+            for model in DEFAULT_MODELS:
+                if model == triage_model:
+                    continue
+                registry.register(
+                    Engine(
+                        model=model,
+                        base_url="http://mock-engine",
+                        port=8000,
+                        transport=mock_transport,
+                    )
+                )
+            typer.echo(
+                f"Contract B: HYBRID LIVE — Triage ({HYBRID_LIVE_MODEL}) -> {base_url} "
+                "(real, verified reachable); correlator/hunter/topology -> in-process mock"
+            )
+            return registry, None, "live", hw_label
+
+        typer.echo(
+            f"WARNING: --hybrid-live requested but the real engine at {base_url} did not "
+            f"respond healthy for {HYBRID_LIVE_MODEL!r} — falling back to full in-process "
+            "mock.",
+            err=True,
+        )
+        registry = EngineRegistry(transport=mock_transport)
+        for engine in default_engines("http://mock-engine"):
+            registry.register(engine)
+        return registry, mock_transport, "mock", None
+
+    # Plain --base-url, no --hybrid-live: pre-existing fully-real path.
+    registry = EngineRegistry(transport=real_transport)
+    for engine in default_engines(base_url):
+        registry.register(engine)
+    typer.echo(f"Contract B: fully live at {base_url}")
+    return registry, real_transport, "live", hw_label
+
+
 async def _run(
     log_file: Path | None,
     db: Path,
@@ -117,6 +233,8 @@ async def _run(
     burst_n: int,
     burst_window_s: float,
     base_url: str,
+    hybrid_live: bool,
+    hw_label: str,
     max_cases: int,
     dashboard: bool,
     dashboard_port: int,
@@ -158,14 +276,10 @@ async def _run(
                 err=True,
             )
 
-    # --- Contract B endpoint ---
-    if base_url:
-        transport: httpx.AsyncBaseTransport | None = None
-        engine_url = base_url
-    else:
-        transport = httpx.ASGITransport(app=mock_app)
-        engine_url = "http://mock-engine"
-        typer.echo("Contract B: in-process mock engine")
+    # --- Contract B endpoint(s) — mock, fully live, or hybrid live ---
+    registry, transport, engine_mode, hw_label_active = await _setup_contract_b(
+        base_url, hybrid_live, hw_label
+    )
 
     # --- boot the core ---
     memory_model = MemoryModel()
@@ -175,9 +289,6 @@ async def _run(
     typer.echo(f"memory model masters (placeholders pending D-03): {masters}")
     budgeter = MemoryBudgeter(memory_model)
     residency = ResidencyManager(on_release=lambda lease: budgeter.release_delta(lease.lease_id))
-    registry = EngineRegistry(transport=transport)
-    for engine in default_engines(engine_url):
-        registry.register(engine)
     materializer = LazyMaterializer(registry, transport=transport)
     generator = CoreGenerator(registry, materializer, transport=transport)
     metrics = CoreMetrics(
@@ -215,6 +326,8 @@ async def _run(
         metrics=metrics,
         memory_model=memory_model,
         residency=residency,
+        engine_mode=engine_mode,
+        hw_label=hw_label_active,
     )
 
     # --- optional L9 dashboard (read-only observation plane) ---

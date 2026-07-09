@@ -12,7 +12,7 @@ import httpx
 
 from app.adapter.contract_b_client import ContractBClient
 from core.materializer import LazyMaterializer
-from core.registry import EngineRegistry
+from core.registry import EngineRegistry, resolve_engine_transport
 
 
 class NotMaterializedError(RuntimeError):
@@ -46,9 +46,14 @@ class CoreGenerator:
                 "context; call materialize() before generate()"
             )
         engine = self._registry.resolve(model)
-        client = ContractBClient(engine.base_url, transport=self._transport)
+        # The wire request must name whatever THIS engine actually serves —
+        # for a hybrid-live real engine that's its real checkpoint name
+        # (e.g. "gpt-oss-20b"), not the internal placeholder `model` key.
+        wire_model = engine.served_model or model
+        transport = resolve_engine_transport(engine, self._transport)
+        client = ContractBClient(engine.base_url, transport=transport)
         response = await client.chat_completion(
-            model=model,
+            model=wire_model,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},

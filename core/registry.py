@@ -63,6 +63,26 @@ class Registry:
 # ---------------------------------------------------------------------------
 
 
+# Sentinel distinguishing "this Engine has no per-engine transport override"
+# from a real, meaningful value of None (None means genuine real-network TCP,
+# so it can't double as "unset"). Every Engine built before hybrid-live
+# existed never set .transport, so it's always _UNSET for them — behavior
+# for every existing caller is byte-for-byte unchanged.
+_UNSET: Any = object()
+
+
+def resolve_engine_transport(
+    engine: Engine, default: httpx.AsyncBaseTransport | None
+) -> httpx.AsyncBaseTransport | None:
+    """
+    An engine's own .transport overrides the registry/generator-wide
+    default — this is what lets one run mix a real engine (transport=None,
+    real TCP) with in-process mocks (transport=ASGITransport) at the same
+    time. Falls back to `default` when the engine never set one.
+    """
+    return default if engine.transport is _UNSET else engine.transport
+
+
 @dataclass
 class Engine:
     """One inference engine serving exactly one model via Contract B."""
@@ -70,6 +90,17 @@ class Engine:
     model: str
     base_url: str
     port: int
+    # The model name THIS engine actually answers to on the wire (Contract B
+    # request body). None means "same as `model`" — true for every mock
+    # engine and for a real engine that happens to serve the placeholder
+    # name directly. Set explicitly when a real engine only recognizes its
+    # own real checkpoint name (e.g. registry key "remanon-triage-7b" but
+    # the real vLLM server only serves "gpt-oss-20b").
+    served_model: str | None = None
+    # Per-engine transport override — see resolve_engine_transport(). Left
+    # at _UNSET, an engine defers to whatever transport its generator/
+    # materializer/registry was given, exactly as before this field existed.
+    transport: Any = _UNSET
     healthy: bool | None = None  # None = never checked
     last_checked: datetime | None = None
 
@@ -80,6 +111,8 @@ class EngineRegistry:
 
     An optional httpx transport is threaded through to the Contract B client
     so tests can target the in-process mock engine without network access.
+    Per-engine transports (see Engine.transport) override this default,
+    which is what makes a hybrid real+mock registry possible.
     """
 
     def __init__(self, transport: httpx.AsyncBaseTransport | None = None) -> None:
@@ -104,15 +137,17 @@ class EngineRegistry:
     async def health_check(self) -> dict[str, bool]:
         """
         Query each engine's /v1/models via Contract B; an engine is healthy
-        iff the request succeeds and it serves its registered model.
+        iff the request succeeds and it serves its registered (real) model.
         """
         results: dict[str, bool] = {}
         for engine in self._engines.values():
-            client = ContractBClient(engine.base_url, transport=self._transport)
+            transport = resolve_engine_transport(engine, self._transport)
+            client = ContractBClient(engine.base_url, transport=transport)
+            wire_model = engine.served_model or engine.model
             try:
                 payload = await client.list_models()
                 served = {m["id"] for m in payload.get("data", [])}
-                ok = engine.model in served
+                ok = wire_model in served
             except (httpx.HTTPError, KeyError, TypeError):
                 ok = False
             engine.healthy = ok
