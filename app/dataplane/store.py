@@ -58,13 +58,37 @@ class TelemetryStore:
     # ------------------------------------------------------------------
 
     def write_records(self, records: list[TelemetryRecord]) -> None:
+        """
+        Idempotent by dialect: deletes any existing rows for each dialect
+        present in `records` before inserting, so re-running the same
+        dataset's ingest never accumulates duplicates — running it any
+        number of times leaves exactly one copy. A batch spanning several
+        dialects (e.g. building one combined multi-system store in a
+        single call) replaces each dialect represented in it independently;
+        dialects NOT present in this batch are left untouched. Delete+
+        insert is one transaction, so a failure never leaves a dialect
+        wiped with nothing written back.
+        """
         if not records:
             return
+        dialects = sorted({r.dialect for r in records})
         rows = [
             (_to_naive_utc(r.ts), r.node, r.level, r.component, r.message, r.dialect, r.raw_line)
             for r in records
         ]
-        self._conn.executemany("INSERT INTO telemetry VALUES (?, ?, ?, ?, ?, ?, ?)", rows)
+        self._conn.execute("BEGIN TRANSACTION")
+        try:
+            for dialect in dialects:
+                self._conn.execute("DELETE FROM telemetry WHERE dialect = ?", [dialect])
+            self._conn.executemany("INSERT INTO telemetry VALUES (?, ?, ?, ?, ?, ?, ?)", rows)
+            self._conn.execute("COMMIT")
+        except Exception:
+            self._conn.execute("ROLLBACK")
+            raise
+
+    def reset(self) -> None:
+        """Truncate the whole telemetry table — used by `ingest --reset` to start clean."""
+        self._conn.execute("DELETE FROM telemetry")
 
     # ------------------------------------------------------------------
     # Reads
