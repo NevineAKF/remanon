@@ -10,6 +10,15 @@ from __future__ import annotations
 
 from app.dataplane.store import TelemetryStore
 
+# The digest is sent verbatim as Contract B system-message content when
+# pinning each master (core/materializer.py::_prefill) — a full node
+# enumeration on a large real store (thousands of distinct nodes) produces a
+# multi-tens-of-KB payload that real inference engines can reject (context
+# length / chat-template limits). Only the node list is capped: it's the one
+# field whose size scales with store size rather than staying summary-sized.
+_MAX_NODES_LISTED = 50
+_MAX_DIGEST_CHARS = 4000
+
 
 class DigestBuilder:
     def __init__(self, store: TelemetryStore) -> None:
@@ -37,13 +46,24 @@ class DigestBuilder:
             f"LIMIT {int(top_components)}"
         )
 
-        return "\n".join(
+        if len(nodes) > _MAX_NODES_LISTED:
+            shown = nodes[:_MAX_NODES_LISTED]
+            nodes_line = (
+                "nodes=" + ", ".join(shown) + f", ...and {len(nodes) - _MAX_NODES_LISTED} more"
+            )
+        else:
+            nodes_line = "nodes=" + ", ".join(nodes)
+
+        digest = "\n".join(
             [
                 "TELEMETRY DIGEST",
                 f"records={total}",
                 f"span={lo.isoformat()} .. {hi.isoformat()}",
-                "nodes=" + ", ".join(nodes),
+                nodes_line,
                 "levels=" + ", ".join(f"{r['level']}:{r['n']}" for r in levels),
                 "top_components=" + ", ".join(f"{r['component']}:{r['n']}" for r in components),
             ]
         )
+        if len(digest) > _MAX_DIGEST_CHARS:
+            digest = digest[: _MAX_DIGEST_CHARS - 3] + "..."
+        return digest
