@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REMANON — Research Vision</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#07090D; --panel:#0E141B; --hair:#22303D;
+  --ink:#E9F0F6; --muted:#7C8DA0; --dim:#48586A;
+  --cyan:#29E0F5; --crimson:#E8434A; --azure:#4C8DFF;
+  --emerald:#2FBF8F; --amber:#F5A623; --crit:#FF4B57;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--void);
+  color:var(--ink);
+  font-family:"JetBrains Mono",ui-monospace,monospace;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+  padding-bottom:34px;
+}
+header{
+  position:sticky;top:0;z-index:20;
+  display:flex;justify-content:space-between;align-items:flex-end;gap:18px;
+  padding:12px 22px 10px;border-bottom:1px solid var(--hair);
+  background:rgba(7,9,13,.94);backdrop-filter:blur(8px);
+}
+.back-link{font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:10px;letter-spacing:.14em;color:var(--muted);text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-bottom:10px;transition:.18s;text-transform:uppercase}
+.back-link:hover{color:var(--amber)}
+.eyebrow{font-size:10px;letter-spacing:.34em;color:var(--amber);text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.blip{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px var(--amber);animation:blip 1.7s infinite;flex-shrink:0}
+@keyframes blip{0%,100%{opacity:1}50%{opacity:.25}}
+h1{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:clamp(17px,2.4vw,30px);line-height:1;letter-spacing:-.01em}
+h1 .r{color:var(--amber)}
+.kicker{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:11px;letter-spacing:.22em;color:var(--amber);margin-top:8px}
+.tagline{color:var(--muted);font-size:11px;margin-top:5px;line-height:1.5}
+.tagline b{color:var(--ink)}
+
+/* ---- honesty badge: the one thing this whole page hinges on ---- */
+.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;max-width:360px}
+.badge-projected{
+  font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.08em;
+  color:var(--amber);text-align:right;
+}
+.badge-sub{font-size:10px;color:var(--dim);text-align:right;line-height:1.5}
+
+/* ---- canvas stage: the full multi-agent city ---- */
+#sec-city{position:relative;height:min(880px,140vh);min-height:640px;border-bottom:1px solid var(--hair)}
+canvas.stage{position:absolute;inset:0;width:100%;height:100%;display:block}
+.stage-caption{
+  position:absolute;left:22px;top:14px;z-index:2;pointer-events:none;
+  font-family:"Chakra Petch",sans-serif;font-size:11px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;
+}
+.stage-caption b{color:var(--muted)}
+
+/* ---- honest framing callout ---- */
+#sec-framing{padding:26px 22px;border-bottom:1px solid var(--hair);background:var(--panel)}
+.framing-box{max-width:920px;margin:0 auto;font-size:13px;line-height:1.75;color:var(--muted)}
+.framing-box .win{color:var(--ink)}
+.framing-box .lose{color:var(--ink)}
+.framing-box a{color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(41,224,245,.4)}
+.framing-box a:hover{border-color:var(--cyan)}
+
+/* ---- memory math ---- */
+#sec-memory{padding:26px 22px 30px;border-bottom:1px solid var(--hair)}
+.sec-head{max-width:1100px;margin:0 auto 18px;display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.sec-head h2{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:15px;letter-spacing:.24em;color:var(--ink)}
+.sec-head .sub{font-size:10.5px;color:var(--muted)}
+.mem-bars{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.mem-row{display:grid;grid-template-columns:190px 1fr 70px;align-items:center;gap:14px}
+.mem-label{font-family:"Chakra Petch",sans-serif;font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mem-label i{color:var(--dim);font-style:normal;font-weight:400;font-size:10px}
+.mem-bar{height:16px;border:1px solid var(--hair);border-radius:2px;background:var(--panel);overflow:hidden;position:relative}
+.mem-fill{height:100%;border-radius:1px}
+.mem-gb{font-size:11px;color:var(--muted);text-align:right;white-space:nowrap}
+.mem-row.total{margin-top:4px;padding-top:12px;border-top:1px dashed var(--hair)}
+.mem-row.total .mem-label{color:var(--ink);font-size:12.5px}
+.mem-row.total .mem-gb{color:var(--ink);font-weight:700}
+.mem-cap-marker{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--crit)}
+.mem-verdict{max-width:1100px;margin:20px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.mem-verdict{grid-template-columns:1fr}}
+.mem-fact{border:1px solid var(--hair);border-radius:3px;padding:13px 16px;font-size:12px;line-height:1.55;background:var(--panel)}
+.mem-fact.ok{border-color:rgba(47,191,143,.4);color:var(--ink)}
+.mem-fact.ok b{color:var(--emerald)}
+.mem-fact.no{border-color:rgba(232,67,74,.4);color:var(--ink)}
+.mem-fact.no b{color:var(--crimson)}
+
+/* ---- results: full projected multi-agent table ---- */
+#sec-results{padding:26px 22px 20px}
+.sec-head-r{font-size:10px;color:var(--dim);letter-spacing:.05em;white-space:nowrap}
+#ledger{max-width:1400px;margin:18px auto 0;width:100%;border-collapse:collapse;table-layout:fixed}
+#ledger th{
+  font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:9.5px;letter-spacing:.14em;
+  color:var(--dim);text-transform:uppercase;text-align:left;
+  padding:8px 10px;border-bottom:1px solid var(--hair);
+}
+#ledger td{
+  vertical-align:top;padding:14px 10px;border-bottom:1px solid rgba(34,48,61,.55);
+  font-size:11px;line-height:1.5;color:var(--muted);overflow:hidden;
+}
+td .p{color:var(--ink);font-size:12px;line-height:1.42}
+td .m{color:var(--dim);font-size:10px;margin-top:3px}
+.clamp{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.cid{color:var(--ink);font-weight:700;font-size:12px;letter-spacing:.03em}
+.ct{color:var(--dim);font-size:9.5px;margin-top:2px}
+.chip{
+  display:inline-block;font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:10px;
+  letter-spacing:.1em;padding:3px 8px;border:1px solid currentColor;border-radius:2px;text-transform:uppercase;
+}
+.sev-critical{color:var(--crit)} .sev-high{color:var(--crimson)} .sev-medium{color:var(--amber)}
+.sev-low{color:var(--azure)} .sev-info{color:var(--dim)}
+.dots{display:flex;gap:5px;padding-top:2px}
+.dot2{width:9px;height:9px;border-radius:50%;border:1px solid var(--hair)}
+.dot2.on{border-color:transparent;background:currentColor;box-shadow:0 0 8px currentColor}
+#ledger-note{max-width:1400px;margin:14px auto 0;font-size:10px;color:var(--dim);letter-spacing:.04em;line-height:1.6}
+
+/* ---- generic content section (cost comparison + memory simulation) ---- */
+.vsec{padding:28px 22px 32px;border-top:1px solid var(--hair)}
+.vsec .sec-head{max-width:1100px;margin:0 auto 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.vsec .sec-head .sub{margin-top:4px;max-width:600px}
+.badge-mini{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:9.5px;letter-spacing:.14em;padding:5px 10px;border-radius:2px;white-space:nowrap;align-self:flex-start;text-transform:uppercase}
+.badge-mini.proj{color:var(--amber);border:1px solid rgba(245,166,35,.4)}
+.badge-mini.live{color:var(--cyan);border:1px solid rgba(41,224,245,.4)}
+
+/* ---- cost comparison table ---- */
+.cost-table{max-width:1100px;margin:6px auto 0;width:100%;border-collapse:collapse}
+.cost-table th,.cost-table td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--hair);font-size:12px;vertical-align:top}
+.cost-table th{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.cost-table td.rowlabel{font-family:"Chakra Petch",sans-serif;font-weight:600;color:var(--dim);white-space:nowrap}
+.cost-table .foot{display:block;color:var(--dim);font-size:10px;margin-top:4px;line-height:1.5}
+.cost-table .cost-bad{color:var(--crimson);font-weight:700;font-size:16px;font-family:"Chakra Petch",sans-serif}
+.cost-table .cost-good{color:var(--emerald);font-weight:700;font-size:16px;font-family:"Chakra Petch",sans-serif}
+.cost-projected-line{max-width:1100px;margin:18px auto 0;font-size:12.5px;color:var(--ink);line-height:1.65}
+.cost-projected-line b{color:var(--amber)}
+.cost-sources{max-width:1100px;margin:10px auto 0;font-size:10px;color:var(--dim);line-height:1.6}
+.cost-measured-note{
+  max-width:1100px;margin:18px auto 0;padding:13px 16px;
+  border:1px solid rgba(41,224,245,.3);border-radius:3px;background:rgba(41,224,245,.05);
+  font-size:11.5px;color:var(--muted);line-height:1.65;
+}
+.cost-measured-note b{color:var(--cyan)}
+.cost-measured-note a{color:var(--cyan)}
+
+/* ---- memory simulation (real, interactive) ---- */
+.sim-controls{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.sim-models{display:flex;flex-wrap:wrap;gap:10px}
+.sim-chip{display:flex;align-items:center;gap:7px;padding:9px 13px;border:1px solid var(--hair);border-radius:3px;background:var(--panel);font-size:11px;color:var(--muted);cursor:pointer;user-select:none}
+.sim-chip input{accent-color:var(--cyan);cursor:pointer;flex-shrink:0}
+.sim-chip b{color:inherit}
+.sim-toggle{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--muted);cursor:pointer;padding:11px 13px;border:1px solid var(--hair);border-radius:3px;background:var(--panel)}
+.sim-toggle input{accent-color:var(--amber);cursor:pointer;flex-shrink:0}
+.sim-toggle i{color:var(--dim);font-style:normal;font-size:10px}
+.sim-bar-wrap{max-width:1100px;margin:36px auto 0}
+.sim-bar{position:relative;height:30px;border:1px solid var(--hair);border-radius:3px;background:var(--panel)}
+.sim-fill{height:100%;width:0;border-radius:2px 0 0 2px;transition:width .3s ease,background .3s ease}
+.sim-fill.ok{background:var(--emerald)}
+.sim-fill.warn{background:var(--amber)}
+.sim-fill.bad{background:var(--crimson)}
+.sim-mark{position:absolute;top:-8px;height:46px;width:1px;background:var(--dim);pointer-events:none}
+.sim-mark span{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--dim);white-space:nowrap;font-family:"JetBrains Mono",monospace}
+.sim-readout{max-width:1100px;margin:16px auto 0;font-size:12.5px;color:var(--ink);line-height:1.65}
+.sim-readout b{font-family:"Chakra Petch",sans-serif;letter-spacing:.02em}
+.sim-note{max-width:1100px;margin:14px auto 0;font-size:10px;color:var(--dim);line-height:1.6}
+
+/* ---- data honesty badge ---- */
+footer#honesty{
+  font-size:10px;letter-spacing:.07em;color:var(--dim);
+  padding:9px 22px;border-top:1px solid var(--hair);
+  background:rgba(14,20,27,.96);text-align:center;
+}
+footer#honesty b{color:var(--muted);font-weight:400}
+
+@media(prefers-reduced-motion:reduce){ .blip{animation:none!important} }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <a class="back-link" href="index.html">← BACK</a>
+    <div class="eyebrow"><span class="blip"></span> REMANON</div>
+    <h1>ONE MEMORY. <span class="r">MANY MINDS.</span> ZERO EVICTIONS.</h1>
+    <div class="kicker">RESEARCH VISION</div>
+    <div class="tagline">GPU-resident shared-memory runtime for multi-agent inference &middot; <b>Maximum alignment, minimum detachment.</b></div>
+  </div>
+  <div class="hdr-right">
+    <div class="badge-projected">COMPUTED (projected)</div>
+    <div class="badge-sub">not run on available 48&nbsp;GB hardware &middot; grounded in 170 tests + real model math</div>
+  </div>
+</header>
+
+<section id="sec-city">
+  <canvas id="cv-city" class="stage"></canvas>
+  <div class="stage-caption"><b>THE FULL CITY</b> — projected · reservoir (uncapped) &rarr; 5 agents &rarr; verdicts</div>
+</section>
+
+<section id="sec-framing">
+  <div class="framing-box">
+    On a full <span class="win">192GB MI300X</span> with enterprise data feeds, the system processes
+    <span class="win">millions of logs continuously with no cap</span> &mdash; all cases classified and
+    investigated by the full multi-agent team. On our available <span class="lose">48GB</span>, we proved
+    the mechanism on one live agent (25 cases, see <a href="measured.html">Measured Reality</a>).
+  </div>
+</section>
+
+<section id="sec-memory">
+  <div class="sec-head">
+    <div>
+      <h2>MEMORY MATH</h2>
+      <div class="sub">real per-model weight sizes &mdash; the core AMD 192GB capacity argument</div>
+    </div>
+  </div>
+  <div class="mem-bars" id="mem-bars"></div>
+  <div class="mem-verdict">
+    <div class="mem-fact ok"><b>✓ Fits on ONE 192GB card.</b> 162&nbsp;GB weights + ~30&nbsp;GB headroom for KV-cache deltas across concurrent, in-flight cases.</div>
+    <div class="mem-fact no"><b>✗ Does NOT fit on an 80GB card.</b> 162&nbsp;GB &gt; 80&nbsp;GB &mdash; a single non-AMD 80GB part cannot hold this team resident at all.</div>
+  </div>
+</section>
+
+<section id="sec-results">
+  <div class="sec-head">
+    <div>
+      <h2>PROJECTED FULL MULTI-AGENT OUTPUT</h2>
+      <div class="sub">the complete verdict shape once all five agents run &mdash; computed/illustrative, not live data</div>
+    </div>
+    <div class="sec-head-r">4 illustrative cases &middot; real BGL/RAS incident shapes</div>
+  </div>
+  <table id="ledger">
+    <colgroup>
+      <col style="width:9%"><col style="width:7%"><col style="width:19%"><col style="width:19%">
+      <col style="width:18%"><col style="width:18%"><col style="width:10%">
+    </colgroup>
+    <thead><tr>
+      <th>Case</th><th>Severity</th><th>Root cause</th><th>Findings</th>
+      <th>Recommendation</th><th>Evidence</th><th>Agents</th>
+    </tr></thead>
+    <tbody id="ledger-body"></tbody>
+  </table>
+  <div id="ledger-note">
+    Rows above are <b style="color:var(--muted)">illustrative</b> — they show the shape of a full five-agent
+    investigation (root cause + findings + recommendation + evidence, cross-checked by all five agents),
+    not recorded output. For real, per-case data from an actual live run, see
+    <a href="measured.html" style="color:var(--cyan)">Measured Reality</a>.
+  </div>
+</section>
+
+<section class="vsec" id="sec-cost">
+  <div class="sec-head">
+    <div>
+      <h2>COST COMPARISON</h2>
+      <div class="sub">projected &mdash; AMD MI300X (192&nbsp;GB) vs. multiple 80&nbsp;GB cards, at typical cloud GPU pricing</div>
+    </div>
+    <span class="badge-mini proj">PROJECTED</span>
+  </div>
+  <table class="cost-table">
+    <thead><tr><th>&nbsp;</th><th>Without Remanon</th><th>With Remanon</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="rowlabel">GPUs needed</td>
+        <td>3&times; 80&nbsp;GB cards<span class="foot">162&nbsp;GB of weights doesn't fit one 80&nbsp;GB card</span></td>
+        <td>1&times; MI300X<span class="foot">162&nbsp;GB of weights fits one 192&nbsp;GB card</span></td>
+      </tr>
+      <tr>
+        <td class="rowlabel">Cost / hour</td>
+        <td class="cost-bad">~$6&nbsp;/hr<span class="foot" style="color:var(--dim)">3 &times; ~$2/hr per 80&nbsp;GB-class card</span></td>
+        <td class="cost-good">~$2&nbsp;/hr<span class="foot" style="color:var(--dim)">1 &times; ~$2/hr MI300X-class instance</span></td>
+      </tr>
+      <tr>
+        <td class="rowlabel">Savings</td>
+        <td>&mdash;</td>
+        <td class="cost-good">~67% lower</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="cost-projected-line"><b>Projected:</b> run continuously, this is tens of thousands of dollars saved per year.</div>
+  <div class="cost-sources">
+    Sources: AMD MI300X spec sheet (192&nbsp;GB HBM3 per card); industry cloud GPU list pricing for 80&nbsp;GB-class and
+    MI300X-class accelerators at roughly &#36;2/hr each at publication time. Figures are approximate and
+    order-of-magnitude &mdash; treat this table as a projection, not a quote.
+  </div>
+  <div class="cost-measured-note">
+    <b>Measured</b> (real, from the 48&nbsp;GB run &mdash; see <a href="measured.html">Measured Reality</a>):
+    Triage alone avoided <b style="color:var(--ink)">110 prefills</b> / saved <b style="color:var(--ink)">10&nbsp;GB</b>
+    on real hardware.
+  </div>
+</section>
+
+<section class="vsec" id="sec-simulation">
+  <div class="sec-head">
+    <div>
+      <h2>MEMORY SIMULATION</h2>
+      <div class="sub">computed simulation &mdash; real model sizes &mdash; toggle models and shared-master to see the real VRAM math</div>
+    </div>
+    <span class="badge-mini live">LIVE MATH</span>
+  </div>
+  <div class="sim-controls">
+    <div class="sim-models" id="sim-models"></div>
+    <label class="sim-toggle">
+      <input type="checkbox" id="sim-remanon" checked>
+      <span>Remanon shared pinned master <i>&mdash; one resident copy per model, reused across every agent that needs it</i></span>
+    </label>
+  </div>
+  <div class="sim-bar-wrap">
+    <div class="sim-bar" id="sim-bar">
+      <div class="sim-fill" id="sim-fill"></div>
+      <div class="sim-mark" id="sim-mark-80"><span>80&nbsp;GB</span></div>
+      <div class="sim-mark" id="sim-mark-192"><span>192&nbsp;GB</span></div>
+    </div>
+  </div>
+  <div class="sim-readout" id="sim-readout"></div>
+  <div class="sim-note">
+    Real arithmetic: each active model contributes its real weight size once (shared master on), or once per agent that
+    uses it (shared master off &mdash; gpt-oss-120b is used by both Correlator and Reporter, so turning sharing off
+    loads it twice). Nothing here is randomized or decorative &mdash; it's the same math as the memory-math section above.
+  </div>
+</section>
+
+<footer id="honesty"><b>projected vision, clearly labeled</b> &middot; grounded in 170 passing tests + real per-model weight math &middot; the live measured proof is on <a href="measured.html" style="color:inherit">Measured Reality</a></footer>
+
+<script>
+"use strict";
+/* =====================================================================
+   REMANON — RESEARCH VISION
+   This page is a COMPUTED PROJECTION: what the full five-agent team looks
+   like on a full 192GB card. Nothing here is live/recorded data — the
+   canvas loop is illustrative motion (continuous, procedural), not a
+   replay of real events like measured.html's MOTION=DATA rule. Every
+   number that matters (model weight sizes, capacity math, test count) is
+   real; the case rows are labeled illustrative because the multi-agent
+   fan-out never ran on the 48GB hardware we actually have.
+   ===================================================================== */
+
+const C = {
+  void:"#07090D", panel:"#0E141B", hair:"#22303D",
+  ink:"#E9F0F6", muted:"#7C8DA0", dim:"#48586A",
+  cyan:"#29E0F5", crimson:"#E8434A", azure:"#4C8DFF",
+  emerald:"#2FBF8F", amber:"#F5A623", crit:"#FF4B57",
+};
+const LEVEL_COLOR = {INFO:"#54667A", WARN:C.amber, ERROR:C.crimson, FATAL:C.crit};
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const easeIO=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const easeOut=t=>1-Math.pow(1-t,3);
+const nowS=()=>performance.now()/1000;
+function hexA(hex,a){
+  const n=parseInt(hex.slice(1),16);
+  return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;
+}
+function el(tag,cls,text){
+  const e=document.createElement(tag);
+  if(cls) e.className=cls;
+  if(text!=null) e.textContent=text;
+  return e;
+}
+const glowCache={};
+function glow(color){
+  if(glowCache[color]) return glowCache[color];
+  const s=document.createElement("canvas"); s.width=s.height=64;
+  const g=s.getContext("2d");
+  const grad=g.createRadialGradient(32,32,0,32,32,32);
+  grad.addColorStop(0,hexA(color,.9)); grad.addColorStop(.35,hexA(color,.32)); grad.addColorStop(1,hexA(color,0));
+  g.fillStyle=grad; g.fillRect(0,0,64,64);
+  return glowCache[color]=s;
+}
+function drawGlow(ctx,color,x,y,r,alpha){
+  ctx.globalAlpha=alpha; ctx.drawImage(glow(color),x-r,y-r,r*2,r*2); ctx.globalAlpha=1;
+}
+const F={
+  chakra:(px,w)=> `${w||600} ${px}px "Chakra Petch",sans-serif`,
+  mono:(px,w)=> `${w||400} ${px}px "JetBrains Mono",monospace`,
+};
+
+/* =====================================================================
+   REAL MODEL WEIGHTS — the core capacity argument. These four numbers
+   are the only "data" this canvas draws from; everything else is motion.
+   ===================================================================== */
+const TOWERS = [
+  {model:"gpt-oss-20b",    agents:["TRIAGE"],              color:C.cyan,    gb:14},
+  {model:"gpt-oss-120b",   agents:["CORRELATOR","REPORTER"],color:C.crimson, gb:76, shared:true},
+  {model:"llama-3.3-70b",  agents:["HUNTER"],              color:C.azure,   gb:48},
+  {model:"qwen3-32b",      agents:["TOPOLOGY"],            color:C.emerald, gb:24},
+];
+const CAPACITY_GB=192, TOTAL_WEIGHTS_GB=TOWERS.reduce((s,t)=>s+t.gb,0), HEADROOM_GB=CAPACITY_GB-TOTAL_WEIGHTS_GB;
+
+/* ---------- render the static memory-math bars (HTML, not canvas —
+   this needs to be readable/selectable, not just glanceable) ---------- */
+(function renderMemBars(){
+  const wrap=document.getElementById("mem-bars");
+  for(const tw of TOWERS){
+    const row=el("div","mem-row");
+    const label=el("div","mem-label"); label.style.color=tw.color;
+    label.append(document.createTextNode(tw.model+" "));
+    label.append(el("i",null,"("+tw.agents.join(" + ")+")"+(tw.shared?" shared":"")));
+    const bar=el("div","mem-bar");
+    const fill=el("div","mem-fill"); fill.style.width=(tw.gb/CAPACITY_GB*100)+"%"; fill.style.background=tw.color;
+    bar.append(fill);
+    const gbEl=el("div","mem-gb",tw.gb+" GB");
+    row.append(label,bar,gbEl);
+    wrap.append(row);
+  }
+  const total=el("div","mem-row total");
+  const tLabel=el("div","mem-label","TOTAL WEIGHTS");
+  const tBar=el("div","mem-bar");
+  const tFill=el("div","mem-fill"); tFill.style.width=(TOTAL_WEIGHTS_GB/CAPACITY_GB*100)+"%"; tFill.style.background=C.amber;
+  tBar.append(tFill);
+  const capMarker=el("div","mem-cap-marker"); capMarker.style.left="100%";
+  tBar.append(capMarker);
+  const tGb=el("div","mem-gb",TOTAL_WEIGHTS_GB+" / "+CAPACITY_GB+" GB");
+  total.append(tLabel,tBar,tGb);
+  wrap.append(total);
+})();
+
+/* =====================================================================
+   FULL RESULTS TABLE — illustrative shape of a complete five-agent
+   verdict. Grounded in real BGL/RAS incident categories (same log family
+   as Measured Reality's real cases) but these four rows are computed
+   examples, not recorded output — labeled as such in the table caption
+   and the note beneath it.
+   ===================================================================== */
+const AGENT_ORDER=["triage","correlator","hunter","topology","reporter"];
+const AGENT_COLOR={triage:C.cyan,correlator:C.crimson,hunter:C.azure,topology:C.emerald,reporter:C.crimson};
+const PROJECTED_CASES=[
+  {
+    id:"PROJECTED-01", severity:"critical",
+    root_cause:"RAPTOR program image missing from shared storage path — a deployment sync failure left the image absent on the affected nodes.",
+    findings:"Correlator clustered 4 nodes reporting identical FATAL RAS.APP errors within an 8s window; Hunter traced the image path to a stale NFS mount that never received the latest sync.",
+    recommendation:"Re-sync the /p/gb2 image store to all compute nodes; add a pre-flight image-existence check to the job scheduler so this fails fast next time.",
+    evidence:"4x FATAL · RAS.APP · image path unreadable (exit 127)",
+  },
+  {
+    id:"PROJECTED-02", severity:"high",
+    root_cause:"Torus network link flapping between two midplane switches, causing intermittent packet loss under load.",
+    findings:"Topology mapped a 12-node blast radius centered on switch R14-M1; Hunter found matching link-down/link-up pairs recurring at ~40ms intervals.",
+    recommendation:"Reseat the fiber at R14-M1 port 3 and fail traffic over to the redundant link pending a hardware swap.",
+    evidence:"ERROR · torus link · 40ms flap interval, 212 occurrences",
+  },
+  {
+    id:"PROJECTED-03", severity:"medium",
+    root_cause:"ECC correctable-error rate on one DIMM crossed the pre-failure threshold.",
+    findings:"Correlator flagged a slow upward trend over a 6-hour window; no FATAL yet, so Topology confirmed zero blast radius beyond the single node.",
+    recommendation:"Schedule a DIMM replacement at the next maintenance window; no immediate action required.",
+    evidence:"WARN · ECC correctable rate · 1,240/hr vs. 1,000/hr threshold",
+  },
+  {
+    id:"PROJECTED-04", severity:"critical",
+    root_cause:"Kernel panic on a boot node after a firmware update — the RAS log shows a watchdog timeout during driver init.",
+    findings:"Hunter matched the panic signature to a known driver/firmware version mismatch; Correlator confirmed the failure was isolated to one node.",
+    recommendation:"Roll back firmware to the last known-good version on the boot node; hold the fleet-wide rollout until the mismatch is fixed.",
+    evidence:"FATAL · kernel watchdog timeout · panic at driver_init+0x4a",
+  },
+];
+(function renderLedger(){
+  const body=document.getElementById("ledger-body");
+  for(const c of PROJECTED_CASES){
+    const tr=el("tr","row");
+
+    const tdCase=el("td");
+    tdCase.append(el("div","cid",c.id), el("div","ct","computed"));
+    tr.append(tdCase);
+
+    const tdSev=el("td");
+    tdSev.append(el("span","chip sev-"+c.severity,c.severity));
+    tr.append(tdSev);
+
+    const tdRoot=el("td"); tdRoot.append(el("div","p clamp",c.root_cause)); tr.append(tdRoot);
+    const tdFind=el("td"); tdFind.append(el("div","p clamp",c.findings)); tr.append(tdFind);
+    const tdRec=el("td"); tdRec.append(el("div","p clamp",c.recommendation)); tr.append(tdRec);
+    const tdEv=el("td"); tdEv.append(el("div","p clamp",c.evidence)); tr.append(tdEv);
+
+    const tdAg=el("td");
+    const dots=el("div","dots");
+    for(const a of AGENT_ORDER){
+      const dot=el("span","dot2 on");
+      dot.style.color=AGENT_COLOR[a];
+      dot.title=a.toUpperCase()+" — full pipeline (projected)";
+      dots.append(dot);
+    }
+    tdAg.append(dots);
+    tr.append(tdAg);
+
+    body.append(tr);
+  }
+})();
+
+/* =====================================================================
+   MEMORY SIMULATION — a genuine computed simulation, not decoration: real
+   arithmetic on the same four real weight sizes used everywhere else on
+   this page. With the shared master ON, an active model contributes its
+   weight once no matter how many agents use it. With it OFF, a model used
+   by N agents (only gpt-oss-120b, used by Correlator + Reporter) has to be
+   loaded N separate times — that duplication IS the cost Remanon removes.
+   ===================================================================== */
+const SIM_SCALE_GB=240; // fixed scale so the 80GB/192GB markers sit at stable positions
+const simState={models:new Set(TOWERS.map(t=>t.model)), remanon:true};
+function computeSimTotal(){
+  let total=0;
+  for(const tw of TOWERS){
+    if(!simState.models.has(tw.model)) continue;
+    total += simState.remanon ? tw.gb : tw.gb*(tw.shared?tw.agents.length:1);
+  }
+  return total;
+}
+function updateSim(){
+  const total=computeSimTotal();
+  const pct=clamp(total/SIM_SCALE_GB*100,0,100);
+  const fill=document.getElementById("sim-fill");
+  fill.style.width=pct+"%";
+  fill.classList.remove("ok","warn","bad");
+  let verdict;
+  if(total<=80){ fill.classList.add("ok"); verdict="fits an 80GB card too."; }
+  else if(total<=192){ fill.classList.add("warn"); verdict="fits a 192GB card — does not fit an 80GB card."; }
+  else { fill.classList.add("bad"); verdict="exceeds even a 192GB card — doesn't fit, would evict."; }
+  const dupNote=simState.remanon?"":" (gpt-oss-120b duplicated for its 2 agents — shared master is off)";
+  document.getElementById("sim-readout").innerHTML =
+    "<b>"+total+" GB</b> total resident weight"+dupNote+" — "+verdict;
+}
+(function renderSimModels(){
+  const wrap=document.getElementById("sim-models");
+  for(const tw of TOWERS){
+    const label=el("label","sim-chip");
+    label.style.color=tw.color;
+    const cb=document.createElement("input");
+    cb.type="checkbox"; cb.checked=true;
+    cb.addEventListener("change",()=>{
+      if(cb.checked) simState.models.add(tw.model); else simState.models.delete(tw.model);
+      updateSim();
+    });
+    const txt=el("b",null,tw.model+" ");
+    const sub=el("span",null,"("+tw.gb+"GB · "+tw.agents.join("+")+")");
+    sub.style.color="var(--dim)"; sub.style.fontSize="10px";
+    label.append(cb,txt,sub);
+    wrap.append(label);
+  }
+  document.getElementById("sim-mark-80").style.left=(80/SIM_SCALE_GB*100)+"%";
+  document.getElementById("sim-mark-192").style.left=(192/SIM_SCALE_GB*100)+"%";
+  document.getElementById("sim-remanon").addEventListener("change",e=>{
+    simState.remanon=e.target.checked; updateSim();
+  });
+  updateSim();
+})();
+
+/* =====================================================================
+   THE FULL CITY — canvas: reservoir (uncapped) -> 5 agents -> verdicts,
+   plus the 4 memory towers. Continuous, procedural, looping — there is
+   no recording to replay here, so unlike measured.html this motion is
+   illustrative, not literal data. It never claims otherwise (see the
+   stage caption and the COMPUTED (projected) badge in the header).
+   ===================================================================== */
+const cv=document.getElementById("cv-city");
+const ctx=cv.getContext("2d");
+let W=0,H=0;
+function resize(){
+  const dpr=devicePixelRatio||1;
+  const r=cv.getBoundingClientRect();
+  W=Math.max(320,r.width); H=Math.max(480,r.height);
+  cv.width=W*dpr; cv.height=H*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+addEventListener("resize",resize);
+resize();
+
+/* normalized (u,v) layout over the canvas */
+const P={
+  reservoir:[0.02,0.40],
+  triage:   [0.14,0.40],
+  laneY:    {correlator:0.20, hunter:0.40, topology:0.60},
+  fanX:0.28, agentX:0.40, mergeX:0.52,
+  join:     [0.58,0.40],
+  reporter: [0.70,0.40],
+  verdict:  [0.85,0.40],
+};
+/* the tower band gets a FIXED pixel height regardless of canvas height, so
+   its internal spacing (caption/bar/labels) never has to fight the
+   pipeline for room — that fixed-vs-proportional mismatch was the root
+   cause of the tower/caption text overlap this fixes. */
+const TOWER_BAND_H=246;
+function xy(u,v){ return [u*W, v*(H-TOWER_BAND_H)]; } // pipeline occupies everything above the tower band
+function pt(uv){ return xy(uv[0],uv[1]); }
+
+function drawNode(x,y,label,sub,color,lit,shape){
+  const r=13;
+  if(lit>0) drawGlow(ctx,color,x,y,32,.5*lit);
+  ctx.strokeStyle=hexA(color,.9); ctx.lineWidth=1.6;
+  ctx.fillStyle=hexA(color,.14+.22*lit);
+  ctx.beginPath();
+  if(shape==="diamond"){ ctx.moveTo(x,y-r-3);ctx.lineTo(x+r+3,y);ctx.lineTo(x,y+r+3);ctx.lineTo(x-r-3,y); ctx.closePath(); }
+  else ctx.arc(x,y,r,0,7);
+  ctx.fill(); ctx.stroke();
+  ctx.font=F.chakra(11,700); ctx.textAlign="center";
+  ctx.fillStyle=hexA(color,.95);
+  ctx.fillText(label,x,y-r-9);
+  if(sub){ ctx.font=F.mono(8.5); ctx.fillStyle=C.dim; ctx.fillText(sub,x,y+r+14); }
+}
+function pipe(a,b,color){
+  ctx.strokeStyle=color?hexA(color,.35):"#2E3F4F"; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+}
+
+/* ---------- reservoir: uncapped log stream, purely ambient ---------- */
+const reservoir=[];
+function spawnReservoirParticle(){
+  const lvl=Math.random()<0.06?"FATAL":Math.random()<0.16?"ERROR":Math.random()<0.34?"WARN":"INFO";
+  const color=LEVEL_COLOR[lvl];
+  const [rx,ry]=pt(P.reservoir);
+  reservoir.push({
+    color, hot:lvl!=="INFO",
+    size:lvl==="INFO"?1.6:lvl==="WARN"?2.2:2.9,
+    x:-20-Math.random()*60, y:ry+(Math.random()-.5)*H*0.34,
+    vx:90+Math.random()*70,
+  });
+  if(reservoir.length>500) reservoir.splice(0,reservoir.length-500);
+}
+function updateReservoir(dt){
+  const spawnRate=REDUCED?18:46; // particles/sec — purely illustrative, no cap being modeled
+  reservoirAcc+=spawnRate*dt;
+  while(reservoirAcc>=1){ reservoirAcc-=1; spawnReservoirParticle(); }
+  const [tx]=pt(P.triage);
+  for(let i=reservoir.length-1;i>=0;i--){
+    const p=reservoir[i];
+    p.x+=p.vx*dt;
+    if(p.x>tx+10) reservoir.splice(i,1);
+  }
+}
+let reservoirAcc=0;
+function drawReservoir(){
+  for(const p of reservoir){
+    if(p.hot) drawGlow(ctx,p.color,p.x,p.y,p.size*4.5,.5);
+    ctx.fillStyle=hexA(p.color,p.hot?.9:.55);
+    ctx.fillRect(p.x-p.size*2,p.y-p.size/2,p.size*4,p.size);
+  }
+}
+
+/* ---------- cases: continuous, overlapping, fully procedural ---------- */
+let cases=[]; let caseSeq=0; let lastSpawn=-99;
+const LIFE=7.2; // seconds, full lifecycle: intake -> fan-out -> reporter -> verdict
+function spawnCaseIfDue(t){
+  const interval=REDUCED?3.2:1.7;
+  if(t-lastSpawn<interval) return;
+  lastSpawn=t;
+  cases.push({id:caseSeq++, t0:t});
+}
+function drawCases(t){
+  const pTri=pt(P.triage), pJoin=pt(P.join), pRep=pt(P.reporter), pVer=pt(P.verdict);
+  for(let i=cases.length-1;i>=0;i--){
+    const cs=cases[i]; const age=t-cs.t0;
+    if(age>LIFE){ cases.splice(i,1); continue; }
+
+    if(age<0.6){
+      /* reservoir -> triage */
+      const k=easeIO(clamp(age/0.6,0,1));
+      const [rx,ry]=pt(P.reservoir);
+      const x=lerp(rx,pTri[0],k), y=lerp(ry,pTri[1],k);
+      drawGlow(ctx,C.cyan,x,y,16,.8);
+      ctx.fillStyle=C.cyan; ctx.beginPath(); ctx.arc(x,y,4.4,0,7); ctx.fill();
+    } else if(age<1.3){
+      /* triage dwell */
+      drawGlow(ctx,C.cyan,pTri[0],pTri[1],40,.35+.25*Math.sin((age-0.6)*6));
+    } else if(age<2.2){
+      /* fan out to all three lanes at once */
+      const k=easeIO(clamp((age-1.3)/0.9,0,1));
+      const fan=xy(P.fanX,0)[0], agx=xy(P.agentX,0)[0];
+      for(const ag of ["correlator","hunter","topology"]){
+        const y=xy(0,P.laneY[ag])[1];
+        let x,py;
+        if(k<0.45){ x=lerp(pTri[0],fan,k/0.45); py=lerp(pTri[1],y,k/0.45); }
+        else { x=lerp(fan,agx,(k-0.45)/0.55); py=y; }
+        const col=ag==="correlator"?C.crimson:ag==="hunter"?C.azure:C.emerald;
+        drawGlow(ctx,col,x,py,14,.75);
+        ctx.fillStyle=col; ctx.beginPath(); ctx.arc(x,py,4,0,7); ctx.fill();
+      }
+    } else if(age<3.1){
+      /* working at each agent */
+      const agx=xy(P.agentX,0)[0];
+      for(const ag of ["correlator","hunter","topology"]){
+        const y=xy(0,P.laneY[ag])[1];
+        const col=ag==="correlator"?C.crimson:ag==="hunter"?C.azure:C.emerald;
+        drawGlow(ctx,col,agx,y,18+3*Math.sin((age-2.2)*8),.6);
+      }
+    } else if(age<4.0){
+      /* return to join */
+      const k=easeIO(clamp((age-3.1)/0.9,0,1));
+      const agx=xy(P.agentX,0)[0], mer=xy(P.mergeX,0)[0];
+      for(const ag of ["correlator","hunter","topology"]){
+        const y=xy(0,P.laneY[ag])[1];
+        let x,py;
+        if(k<0.6){ x=lerp(agx,mer,k/0.6); py=y; }
+        else { x=lerp(mer,pJoin[0],(k-0.6)/0.4); py=lerp(y,pJoin[1],(k-0.6)/0.4); }
+        const col=ag==="correlator"?C.crimson:ag==="hunter"?C.azure:C.emerald;
+        drawGlow(ctx,col,x,py,12,.65);
+        ctx.fillStyle=col; ctx.beginPath(); ctx.arc(x,py,3.6,0,7); ctx.fill();
+      }
+    } else if(age<4.5){
+      /* join -> reporter */
+      const k=easeIO(clamp((age-4.0)/0.5,0,1));
+      const x=lerp(pJoin[0],pRep[0],k), y=lerp(pJoin[1],pRep[1],k);
+      drawGlow(ctx,C.crimson,x,y,16,.8);
+      ctx.fillStyle=C.crimson; ctx.beginPath(); ctx.arc(x,y,4.4,0,7); ctx.fill();
+    } else if(age<5.0){
+      /* reporter dwell */
+      drawGlow(ctx,C.crimson,pRep[0],pRep[1],38,.35+.25*Math.sin((age-4.5)*6));
+    } else if(age<5.6){
+      /* reporter -> verdict */
+      const k=easeIO(clamp((age-5.0)/0.6,0,1));
+      const x=lerp(pRep[0],pVer[0],k), y=lerp(pRep[1],pVer[1],k);
+      drawGlow(ctx,C.amber,x,y,18,.85);
+      ctx.fillStyle=C.amber; ctx.beginPath(); ctx.arc(x,y,5,0,7); ctx.fill();
+    } else {
+      /* verdict crystallization + fade */
+      const a=clamp(1-(age-5.6)/1.6,0,1);
+      drawGlow(ctx,C.amber,pVer[0],pVer[1],60*easeOut(clamp((age-5.6)/0.5,0,1)),.7*a);
+      ctx.save(); ctx.translate(pVer[0],pVer[1]); ctx.rotate((age-5.6)*0.6);
+      ctx.strokeStyle=hexA(C.amber,.9*a); ctx.lineWidth=1.5;
+      ctx.beginPath();
+      for(let k=0;k<6;k++){ const an=k/6*Math.PI*2, rr=11;
+        k?ctx.lineTo(Math.cos(an)*rr,Math.sin(an)*rr):ctx.moveTo(Math.cos(an)*rr,Math.sin(an)*rr); }
+      ctx.closePath(); ctx.stroke(); ctx.restore();
+    }
+  }
+}
+
+/* ---------- static skeleton + nodes ---------- */
+function drawSkeleton(){
+  const pRes=pt(P.reservoir), pTri=pt(P.triage), pJoin=pt(P.join), pRep=pt(P.reporter), pVer=pt(P.verdict);
+  pipe(pRes,pTri);
+  for(const ag of ["correlator","hunter","topology"]){
+    const y=xy(0,P.laneY[ag])[1];
+    const fan=xy(P.fanX,0)[0], mer=xy(P.mergeX,0)[0];
+    ctx.strokeStyle="#2E3F4F"; ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(pTri[0],pTri[1]); ctx.lineTo(fan,y); ctx.lineTo(mer,y); ctx.lineTo(pJoin[0],pJoin[1]);
+    ctx.stroke();
+  }
+  pipe(pJoin,pRep); pipe(pRep,pVer);
+
+  drawNode(pTri[0],pTri[1],"TRIAGE","gpt-oss-20b",C.cyan,0.35,"diamond");
+  drawNode(xy(P.agentX,P.laneY.correlator)[0],xy(0,P.laneY.correlator)[1],"CORRELATOR","gpt-oss-120b",C.crimson,0.3,"circle");
+  drawNode(xy(P.agentX,P.laneY.hunter)[0],xy(0,P.laneY.hunter)[1],"HUNTER","llama-3.3-70b",C.azure,0.3,"circle");
+  drawNode(xy(P.agentX,P.laneY.topology)[0],xy(0,P.laneY.topology)[1],"TOPOLOGY","qwen3-32b",C.emerald,0.3,"circle");
+  drawNode(pJoin[0],pJoin[1],"JOIN","barrier · fan-in",C.dim,0,"circle");
+  drawNode(pRep[0],pRep[1],"REPORTER","gpt-oss-120b · shared",C.crimson,0.3,"circle");
+  drawNode(pVer[0],pVer[1],"VERDICT","full investigation output",C.amber,0.25,"circle");
+
+  ctx.font=F.chakra(9.5); ctx.fillStyle=C.dim; ctx.textAlign="left";
+  ctx.fillText("RESERVOIR — uncapped",pRes[0]-10,pRes[1]-42);
+}
+
+/* ---------- memory towers + capacity bar (fixed-height bottom band) ----------
+   Every text element below is laid out against explicit offsets from
+   bandTop, each checked to leave a real gap from its neighbor — this is
+   what fixes the caption/tower and 80GB-marker/caption overlaps that used
+   to happen here (the old code assumed a 48GB max tower height and drew
+   the "80GB card ends here" label above the bar, both of which collided
+   with real content once the real 76GB gpt-oss-120b tower is drawn to
+   scale). ---------- */
+function drawTowers(){
+  const bandTop=H-TOWER_BAND_H, bandBottom=H-6;
+  const maxGb=Math.max(...TOWERS.map(t=>t.gb));   // 76 — normalize to the tallest REAL tower, not a guess
+  const totalGb=TOWERS.reduce((s,t)=>s+t.gb,0);
+
+  ctx.font=F.chakra(9.5); ctx.fillStyle=C.dim; ctx.textAlign="left";
+  ctx.fillText("PINNED SHARED MEMORY — all four models resident, all the time",W*0.05,bandTop+8);
+
+  /* capacity bar: its own row, both labels BELOW it so nothing fights the
+     caption above or the tower boxes below */
+  const barY=bandTop+40, barH=9, bx0=W*0.05, bx1=W*0.67;
+  const barW=(bx1-bx0)*(TOTAL_WEIGHTS_GB/CAPACITY_GB);
+  ctx.fillStyle=hexA(C.amber,.55); ctx.fillRect(bx0,barY,barW,barH);
+  ctx.strokeStyle=C.hair; ctx.strokeRect(bx0,barY,bx1-bx0,barH);
+
+  const x80=bx0+(bx1-bx0)*(80/CAPACITY_GB);
+  ctx.strokeStyle=hexA(C.crimson,.8); ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(x80,barY-4); ctx.lineTo(x80,barY+barH+4); ctx.stroke(); ctx.setLineDash([]);
+
+  /* two separate lines, not one shared row — at narrow canvas widths a
+     left-aligned line and a centered marker label on the SAME row can
+     collide depending on exact text width, so each gets its own line. */
+  const labelY1=barY+barH+16, labelY2=labelY1+13;
+  ctx.font=F.mono(9); ctx.fillStyle=C.muted; ctx.textAlign="left";
+  ctx.fillText(TOTAL_WEIGHTS_GB+" / "+CAPACITY_GB+" GB on one 192GB card",bx0,labelY1);
+  ctx.font=F.mono(8.5); ctx.fillStyle=C.crimson; ctx.textAlign="center";
+  ctx.fillText("↑ 80GB card ends here",x80,labelY2);
+
+  /* tower boxes: bottom-aligned bar chart, own row well below the bar */
+  const towerRowTop=labelY2+26, towerMaxH=96, towerBottom=towerRowTop+towerMaxH;
+  let u=0.05; const span=0.62;
+  for(const tw of TOWERS){
+    const w=span*(tw.gb/totalGb)*W;
+    const x0=u*W;
+    const h=towerMaxH*(tw.gb/maxGb);
+    const boxTop=towerBottom-h;
+    ctx.fillStyle=hexA(tw.color,.18); ctx.strokeStyle=hexA(tw.color,.8); ctx.lineWidth=1.3;
+    ctx.fillRect(x0,boxTop,w-6,h); ctx.strokeRect(x0,boxTop,w-6,h);
+    if(h>26){
+      ctx.font=F.chakra(8.5,700); ctx.fillStyle=C.amber; ctx.textAlign="center";
+      ctx.fillText("PINNED",x0+(w-6)/2,boxTop+13);
+    }
+    if(tw.shared){
+      ctx.font=F.chakra(8.5,700); ctx.fillStyle=C.amber; ctx.textAlign="center";
+      ctx.fillText("SHARED ×2",x0+(w-6)/2,towerRowTop-8);
+    }
+    ctx.font=F.chakra(11,700); ctx.fillStyle=tw.color; ctx.textAlign="center";
+    ctx.fillText(tw.model,x0+(w-6)/2,towerBottom+18);
+    ctx.font=F.mono(8.5); ctx.fillStyle=C.muted;
+    ctx.fillText(tw.gb+" GB",x0+(w-6)/2,towerBottom+31);
+    u+=span*(tw.gb/totalGb);
+  }
+}
+
+/* ---------- main loop ---------- */
+let lastT=nowS();
+function frame(){
+  const t=nowS(); const dt=Math.min(0.05,t-lastT); lastT=t;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle=C.void; ctx.fillRect(0,0,W,H);
+
+  updateReservoir(dt);
+  drawReservoir();
+  drawSkeleton();
+  spawnCaseIfDue(t);
+  drawCases(t);
+  drawTowers();
+
+  ctx.font=F.mono(9.5); ctx.fillStyle=C.dim; ctx.textAlign="left";
+  ctx.fillText("illustrative motion — computed projection, not a replay (real motion=data lives on measured.html)",14,H-10);
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
