@@ -1,9 +1,10 @@
 name: Deploy Pages
 
-# Publishes dashboard/showcase/index.html — the self-contained, honest
-# showcase build — as the GitHub Pages site root on every push to main.
-# Regenerated from that file on every run: nothing is ever manually copied,
-# so the published page can never go stale relative to what's in the repo.
+# Publishes the dashboard/showcase/ 3-page build (index.html landing page,
+# measured.html, research.html) as the GitHub Pages site root on every push
+# to main. Regenerated from those files on every run: nothing is ever
+# manually copied, so the published site can never go stale relative to
+# what's in the repo.
 
 on:
   push:
@@ -31,25 +32,76 @@ jobs:
       - name: Verify the showcase build is honest before publishing it
         # Refuses to publish if a future change ever reintroduces a stale
         # or unlabeled hardware claim — this is what makes "never reverts"
-        # actually true, not just a hope.
+        # actually true, not just a hope. Checks are per-page because each
+        # page now makes a different honesty claim: index.html is just a
+        # landing page (no numbers to fabricate), measured.html is the
+        # real gfx1100 run (no projected figures allowed on it at all),
+        # and research.html is the only page where the 192GB projection
+        # is allowed to exist, as long as it's labeled as computed.
         run: |
-          grep -qF "COMPUTED (projected)" dashboard/showcase/index.html || {
-            echo "::error::dashboard/showcase/index.html is missing the honest 'COMPUTED (projected)' hardware label — refusing to publish."
+          set -e
+
+          echo "--- index.html: honest hardware line + links to both pages ---"
+          grep -qiF "gfx1100" dashboard/showcase/index.html || {
+            echo "::error::dashboard/showcase/index.html is missing the AMD gfx1100 hardware line — refusing to publish."
             exit 1
           }
-          grep -qF "192 GB figures are computed projections" dashboard/showcase/index.html || {
-            echo "::error::dashboard/showcase/index.html is missing the provenance line — refusing to publish."
+          grep -qF 'href="measured.html"' dashboard/showcase/index.html || {
+            echo "::error::dashboard/showcase/index.html is missing the link to measured.html — refusing to publish."
+            exit 1
+          }
+          grep -qF 'href="research.html"' dashboard/showcase/index.html || {
+            echo "::error::dashboard/showcase/index.html is missing the link to research.html — refusing to publish."
             exit 1
           }
 
+          echo "--- measured.html: real gfx1100 measurement, no 192GB fabrication ---"
+          grep -qiF "gfx1100" dashboard/showcase/measured.html || {
+            echo "::error::dashboard/showcase/measured.html is missing the gfx1100 hardware label — refusing to publish."
+            exit 1
+          }
+          grep -qiF "measured" dashboard/showcase/measured.html || {
+            echo "::error::dashboard/showcase/measured.html is missing the 'measured' honesty label — refusing to publish."
+            exit 1
+          }
+          # The recorded-run data island legitimately contains "192" many
+          # times (it's the real recording's own projected-config numbers,
+          # replayed verbatim, not a claim this page renders) — strip it
+          # before checking that no stray "192" claim leaks into anything
+          # measured.html actually displays.
+          if sed '/<script type="application\/json" id="run-recording-data">/,/<\/script>/d' \
+              dashboard/showcase/measured.html | grep -qi "192"; then
+            echo "::error::dashboard/showcase/measured.html contains a '192' claim outside the embedded recording data — this page is measured-only, refusing to publish."
+            exit 1
+          fi
+
+          echo "--- research.html: the only page allowed to show the 192GB projection ---"
+          if [ -f dashboard/showcase/research.html ]; then
+            grep -qF "COMPUTED (projected)" dashboard/showcase/research.html || {
+              echo "::error::dashboard/showcase/research.html is missing the honest 'COMPUTED (projected)' label — refusing to publish."
+              exit 1
+            }
+            grep -qF "192" dashboard/showcase/research.html || {
+              echo "::error::dashboard/showcase/research.html doesn't mention the 192GB projection it exists to describe — refusing to publish."
+              exit 1
+            }
+          else
+            echo "::notice::dashboard/showcase/research.html doesn't exist yet — skipping its check for now. Once it's added, this gate will start enforcing the 'COMPUTED (projected)' label on it automatically."
+          fi
+
       - name: Assemble Pages site (showcase dashboard as site root)
-        # Force a CLEAN _site/ with exactly two files: the showcase build
-        # as index.html, and .nojekyll. Nothing else — no README, no repo
-        # root — ever goes into the uploaded artifact.
+        # Force a CLEAN _site/ with exactly the showcase pages plus
+        # .nojekyll. Nothing else — no README, no repo root — ever goes
+        # into the uploaded artifact. research.html is copied only if it
+        # exists yet, same as the honesty check above.
         run: |
           rm -rf _site
           mkdir -p _site
           cp dashboard/showcase/index.html _site/index.html
+          cp dashboard/showcase/measured.html _site/measured.html
+          if [ -f dashboard/showcase/research.html ]; then
+            cp dashboard/showcase/research.html _site/research.html
+          fi
           touch _site/.nojekyll
           echo "--- _site contents (this is the entire published artifact) ---"
           ls -la _site
