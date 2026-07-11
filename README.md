@@ -144,7 +144,7 @@ An incident-investigation team, each agent a distinct role on the same shared co
 | **Topology** | Maps the blast radius | Qwen3-32B |
 | **Reporter** | Synthesizes the final verdict | gpt-oss-120b |
 
-Correlator and Reporter run on the same model, so they share a single pinned master: two agents, one resident copy. The sharing unit is the **distinct model**, never the family.
+Correlator and Reporter run on the same model, so they share a single pinned master: two agents, one resident copy. The sharing unit is the **distinct model**, never the family. The runtime's memory-model specs are dev-scaled for GPU-free CI; the real-model projection and its derivation live in [docs/evidence/D03_budget_sheet.md](docs/evidence/D03_budget_sheet.md) (Tier 2b).
 
 ---
 

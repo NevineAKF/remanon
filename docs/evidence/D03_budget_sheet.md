@@ -9,6 +9,9 @@ grounding, in two tiers:
 - **Tier 2 — COMPUTED**: `core/memory_model.py`'s numbers for the MI300X
   192 GB target, run through the admission-law arithmetic, with the
   methodology and Tier-1 agreement stated explicitly.
+- **Tier 2b — COMPUTED, third-party verifiable**: the real-model
+  projection the dev-scaled Tier-2 specs stand in for, derived from public
+  checkpoint sizes and one measured constant.
 
 Every number below is labeled **MEASURED** or **COMPUTED**. None are
 guessed.
@@ -234,3 +237,67 @@ metric agree by construction, because both read `MemoryModel.models`.
   profiled per-agent working-set measurement.
 
 Closing these is the next D-03 milestone.
+
+---
+
+## Tier 2b — Real-model projection (COMPUTED, third-party verifiable)
+
+Tier 2 above computes over `core/memory_model.py`'s dev-scaled specs. This
+section projects the load sizes of the REAL four-model team from public
+checkpoint sizes, so every cell is reproducible by a third party without
+access to our hardware.
+
+### Derivation rule
+
+```
+projected_load(model) = public_checkpoint_size × LOAD_OVERHEAD
+LOAD_OVERHEAD         = 14.3 / 12.8 = 1.1171875  (≈ 1.117)
+```
+
+`LOAD_OVERHEAD` is the ONLY measured constant in this section: our
+measured vLLM load of gpt-oss-20b (Tier 1, `vllm_boot.log:46` — 14.3 GiB)
+over its published checkpoint size (OpenAI gpt-oss model card,
+arXiv:2508.10925 Table 1: gpt-oss-20b = 12.8 GiB, gpt-oss-120b = 60.8 GiB,
+both MXFP4). Every derived cell below is computed from this formula with
+the exact ratio 1.1171875 — no result is hand-typed. GB (decimal) =
+GiB × 1.073741824.
+
+### Projection table
+
+| Model | Serving precision | Public checkpoint (GiB, source) | × 1.117 → projected load (GiB) | Projected load (GB, decimal) |
+|---|---|---|---:|---:|
+| gpt-oss-20b (**anchor**) | MXFP4 | 12.8 — model card, arXiv:2508.10925 Table 1 | **14.3** | 15.35 |
+| gpt-oss-120b | MXFP4 | 60.8 — model card, arXiv:2508.10925 Table 1 | 67.93 | 72.93 |
+| llama-3.3-70b | 4-bit weight-only class | 70.6e9 params × ~0.55 B/param = 38.83e9 B ≈ 36.16 — estimated | 40.40 | 43.38 |
+| qwen3-32b | 4-bit weight-only class | 32.8e9 params × ~0.55 B/param = 18.04e9 B ≈ 16.80 — estimated | 18.77 | 20.15 |
+| **Total (projected loads)** | | | **≈ 141.4** | **≈ 151.8** |
+
+The **anchor row** is the formula's identity check: for gpt-oss-20b it
+reproduces the measured 14.3 GiB exactly — by construction, since
+`LOAD_OVERHEAD` is defined from that very measurement. It anchors the
+scale of the projection; it is not an independent validation. The
+~0.55 byte/param figure for the two non-MXFP4 rows is the 4-bit
+weight-only class: 0.5 B/param for quantized dense weights plus
+unquantized embeddings/norms overhead.
+
+### Reconciliation — the three layers, one thesis
+
+1. `core/memory_model.py`'s specs are a deliberately **dev-scaled
+   topology** so the full admission law runs in CI on any machine — the
+   ARITHMETIC is production, the SIZES are scaled.
+2. This Tier-2b table is the **real-model projection** those dev-scaled
+   specs stand in for.
+3. The presentation's working figures (~76/~48/~24/~14 GB, "~162 GB
+   total") are rounded, deliberately conservative estimates of this same
+   table — ~14 tracks the measured 14.3 GiB directly, while ~76/~48/~24
+   round the three unmeasured projections upward. Whichever variant is
+   used, the capacity thesis is unchanged: the real four-model team's
+   loads (≈ 151.8 GB projected, ~162 GB conservative) cannot fit on an
+   80 GB card, and fit a 192 GB MI300X with headroom.
+4. Replacing all of this with direct MI300X measurement remains D-03's
+   open follow-up.
+5. Tier 2's `master_gb` / delta rationing is sized for the dev-scaled
+   topology and does NOT add unchanged onto this table: at real model
+   sizes the rationing is re-derived within the remaining headroom
+   (192 − 12 − ~152 ≈ 28 GB) — the optimal split is exactly research
+   question 2 (residency arbitration) and part of D-03's follow-up.
