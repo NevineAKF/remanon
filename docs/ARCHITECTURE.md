@@ -1,6 +1,6 @@
 # Remanon — Architecture
 
-> Status: **scaffold / stub** — implementation pending.
+> Status: **implemented and contract-tested** — Bands A/B run GPU-free against the in-process mock engine (Contract B); engine-level (in-HBM) enforcement is the research roadmap.
 
 ## Overview
 
@@ -29,8 +29,10 @@ specialized agent must produce.
 
 ## Band B — Core Runtime (Memory Arbiter)
 
-Implemented CPU-only; all sizing numbers are configured placeholders pending
-the measured budget sheet (**D-03**) from the live MI300X.
+Implemented CPU-only. Sizing numbers are configured placeholders: the
+gpt-oss-20b-class weights are Tier-1 grounded by `docs/evidence/D03_budget_sheet.md`
+(14.0 GB configured vs. 14.3 GiB measured); the MI300X-class numbers remain
+COMPUTED — **D-03**'s open follow-up.
 
 | Module | Responsibility |
 |--------|----------------|
@@ -129,7 +131,8 @@ Orchestrator.triage()
          Final Report
 ```
 
-All inter-agent data passes as HBM3 region handles (zero-copy).
+Inter-agent data passes as schema-validated `Artifact`s today; zero-copy
+HBM3 region-handle passing is engine-level research-roadmap work.
 
 ---
 

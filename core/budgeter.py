@@ -1,4 +1,11 @@
-"""Band B — budgets: token budgets + the HBM3 admission law (Memory Arbiter)."""
+"""
+Band B — budgets (Memory Arbiter).
+
+Enforced today and contract-tested: the byte-exact HBM3 admission law
+(MemoryBudgeter over a BudgetLedger), pinned-block protection (weights and
+masters have no removal API — pressure rule (c)), and per-agent delta caps.
+The only stub in this file is the token-budget Budgeter class below.
+"""
 
 from __future__ import annotations
 
@@ -27,7 +34,14 @@ class UsageRecord:
 
 
 class Budgeter:
-    """Enforces per-agent resource quotas (stub — no enforcement yet)."""
+    """
+    Per-agent token-budget bookkeeping (stub — advisory only).
+
+    Records budgets/usage and answers check_token_budget(), but no runtime
+    path consults it yet: wiring token enforcement into the generation
+    gateway is roadmap work. The HBM3 admission law in this file is NOT part
+    of this stub — MemoryBudgeter enforces it today.
+    """
 
     def __init__(self) -> None:
         self._budgets: dict[AgentName, Budget] = {}

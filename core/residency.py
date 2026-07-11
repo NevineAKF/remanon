@@ -27,7 +27,9 @@ class RegionRecord:
 
 
 class ResidencyTracker:
-    """Tracks which tensor regions reside in HBM3 vs host RAM (stub)."""
+    """Will track HBM3-vs-host-RAM tensor regions once engine-level enforcement
+    lands (the research roadmap); intentionally deferred — no runtime path
+    depends on it today."""
 
     def __init__(self) -> None:
         self._regions: dict[str, RegionRecord] = {}
