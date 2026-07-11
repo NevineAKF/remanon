@@ -71,10 +71,11 @@ The difference is one of **contract, not mechanism** — the first question any 
 | Scope | Lives inside one engine | A cross-engine arbiter over multiple engines sharing one memory pool |
 | Admission | No awareness of other work | New work is budgeted around the pinned master |
 
-**Two guarantees, enforced by contract and proven by tests:**
+**Three guarantees, enforced by contract and proven by tests:**
 
 - **Pinned-never-evicted** — a pinned master is never evicted, for any reason, under any pressure. No eviction path exists for a leased block; verified at the transport layer.
 - **One-prefill-per-model** — the master is prefilled at most once per distinct model, ever. Ten concurrent leases for one model produce exactly one measured prefill.
+- **Read-through-master** — every generation request carries the pinned master context as its byte-identical system prefix; two agents on one model share that prefix on the wire. Verified at the transport layer.
 
 ### In depth: why the distinction is decisive
 
@@ -216,6 +217,8 @@ python -m app.orchestrator.run_demo --record
 # diverse selection: one case per distinct failure signature, spread across time
 python -m app.orchestrator.run_demo --record --select diverse --max-cases 25
 ```
+
+The recorded July run predates the read-through-master change; the new invariant is enforced and transport-verified by the contract tests.
 
 <a name="engineering-discipline"></a>
 

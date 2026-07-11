@@ -10,12 +10,14 @@ not internal assertions alone.
 from __future__ import annotations
 
 import asyncio
+import json
 
 import httpx
 import pytest
 
 from core.budgeter import BudgetExceeded, MemoryBudgeter
-from core.materializer import LazyMaterializer
+from core.generator import CoreGenerator, NotMaterializedError
+from core.materializer import LazyMaterializer, master_system_content
 from core.memory_model import GIB, MemoryModel, ModelSpec
 from core.metrics import CoreMetrics
 from core.registry import Engine, EngineRegistry
@@ -276,6 +278,68 @@ class TestEngineRegistry:
     def test_resolve_unknown_model_raises(self) -> None:
         with pytest.raises(KeyError):
             EngineRegistry().resolve("nope")
+
+
+# ---------------------------------------------------------------------------
+# (f) Agents read through the master: generation carries the pinned prefix
+# ---------------------------------------------------------------------------
+
+
+class RecordingTransport(httpx.AsyncBaseTransport):
+    """Wraps ASGITransport and captures every Contract B chat request body."""
+
+    def __init__(self, inner: httpx.AsyncBaseTransport) -> None:
+        self._inner = inner
+        self.chat_bodies: list[dict] = []
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v1/chat/completions":
+            self.chat_bodies.append(json.loads(request.content))
+        return await self._inner.handle_async_request(request)
+
+
+def _read_through_stack() -> tuple[RecordingTransport, LazyMaterializer, CoreGenerator]:
+    transport = RecordingTransport(httpx.ASGITransport(app=mock_app))
+    registry = EngineRegistry(transport=transport)
+    registry.register(Engine(model=MODEL, base_url="http://mock-engine", port=8000))
+    materializer = LazyMaterializer(registry, transport=transport)
+    generator = CoreGenerator(registry, materializer, transport=transport)
+    return transport, materializer, generator
+
+
+class TestAgentsReadThroughMaster:
+    async def test_generate_carries_exact_master_prefix(self) -> None:
+        transport, materializer, generator = _read_through_stack()
+        await materializer.materialize("ctx-master", MODEL, context_text="X")
+
+        await generator.generate("correlator", MODEL, "role: correlator", "case body")
+
+        # Observed on the wire: chat_bodies[0] is the prefill, [1] the generate.
+        assert len(transport.chat_bodies) == 2
+        system = transport.chat_bodies[1]["messages"][0]
+        assert system["role"] == "system"
+        assert system["content"].startswith(master_system_content("ctx-master", "X"))
+
+    async def test_two_agents_same_model_share_byte_identical_prefix(self) -> None:
+        transport, materializer, generator = _read_through_stack()
+        await materializer.materialize("ctx-master", MODEL, context_text="X")
+
+        await generator.generate("correlator", MODEL, "role: correlator", "case body")
+        await generator.generate("reporter", MODEL, "role: reporter", "case body")
+
+        prefix = master_system_content("ctx-master", "X")
+        first = transport.chat_bodies[1]["messages"][0]["content"]
+        second = transport.chat_bodies[2]["messages"][0]["content"]
+        # Byte-identical through the master prefix...
+        assert first[: len(prefix)] == prefix
+        assert second[: len(prefix)] == prefix
+        # ...and diverging only after it (the role prompts differ).
+        assert first[len(prefix) :] != second[len(prefix) :]
+
+    async def test_generate_before_materialize_still_raises(self) -> None:
+        _, _, generator = _read_through_stack()
+        with pytest.raises(NotMaterializedError):
+            await generator.generate("correlator", MODEL, "role: correlator", "case body")
 
 
 # ---------------------------------------------------------------------------

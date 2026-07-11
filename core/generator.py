@@ -45,6 +45,14 @@ class CoreGenerator:
                 f"Agent {agent_name!r}: model {model!r} has no materialized master "
                 "context; call materialize() before generate()"
             )
+        # WHY: every generation request carries the pinned master as its
+        # byte-identical system prefix — agents genuinely read the shared
+        # context, and the engine-level prefix reuse between same-model
+        # agents becomes attributable to Remanon's pinned master. The prefix
+        # is never None here: the guard above passed, and the materializer
+        # installs handle and text atomically in one critical section.
+        prefix = self._materializer.master_prefix(model)
+        system_content = f"{prefix}\n\n{system_prompt}"
         engine = self._registry.resolve(model)
         # The wire request must name whatever THIS engine actually serves —
         # for a hybrid-live real engine that's its real checkpoint name
@@ -55,7 +63,7 @@ class CoreGenerator:
         response = await client.chat_completion(
             model=wire_model,
             messages=[
-                {"role": "system", "content": system_prompt},
+                {"role": "system", "content": system_content},
                 {"role": "user", "content": user_prompt},
             ],
             max_tokens=max_tokens,
